@@ -20,6 +20,7 @@ from pathlib import Path
 from PIL import Image as _PIL
 
 from legacy import icon, WA_SVG, PHONE, PHONE_LINK, WA_LINK, ADDRESS, quick_form
+from quote import quote_attrs, quote_inline, quote_modal, CATEGORIES as QUOTE_CATEGORIES
 
 SRC = Path(__file__).parent
 OUT = Path(__file__).resolve().parent.parent
@@ -313,6 +314,7 @@ def machine_card(it, variant=None, hidden=False):
     m = acf(it, "model")
     actions = '<div class="machine-actions cpe-card__actions">{}</div>'
     btn = '<a class="btn {} btn--sm cpe-card__action" href="{}">{}</a>'
+    qbtn = '<a class="btn btn--red btn--sm cpe-card__action" href="contact.html#enquiry" {}>{}</a>'
     if variant == "rental":
         c = SLUG_CAT[tax(it, "machine_type")]
         img, ph, out = acf(it, "image"), acf(it, "platform_height"), acf(it, "outreach")
@@ -324,7 +326,7 @@ def machine_card(it, variant=None, hidden=False):
         specs = (f"<div><strong>{acf(it, 'working_height'):g} m</strong>Working ht.</div>\n      {mid}\n"
                  f"      <div><strong>{acf(it, 'capacity')} kg</strong>Capacity</div>")
         price = ""
-        acts = btn.format("btn--ghost", href, "Details") + "\n      " + btn.format("btn--red", "contact.html#enquiry", "Get a Quote")
+        acts = btn.format("btn--ghost", href, "Details") + "\n      " + qbtn.format(quote_attrs("rental", m, c["one"].capitalize()), "Get a Quote")
     else:
         y, origin = acf(it, "year"), acf(it, "origin")
         tname = TYPES[tax(it, "machine_type")][1]
@@ -335,7 +337,7 @@ def machine_card(it, variant=None, hidden=False):
             specs = (f"<div><strong>{y}</strong>Year</div>\n      <div><strong>{acf(it, 'sold_to') or '—'}</strong>Sold to</div>\n"
                      f"      <div><strong>{fmt_date(acf(it, 'sold_date'))}</strong>Sold</div>")
             price = ""
-            acts = btn.format("btn--ghost", href, "Details") + "\n      " + btn.format("btn--red", "contact.html#enquiry", "Find Me One")
+            acts = btn.format("btn--ghost", href, "Details") + "\n      " + qbtn.format(quote_attrs("sale", m, sold=True), "Find Me One")
         else:
             img = acf(it, "image")
             top = ""
@@ -344,7 +346,7 @@ def machine_card(it, variant=None, hidden=False):
             specs = (f"<div><strong>{y}</strong>Year</div>\n      <div><strong>{acf(it, 'working_height'):g} m</strong>Working ht.</div>\n"
                      f"      <div><strong>{BRAND_NAMES[tax(it, 'machine_brand')]}</strong>Brand</div>")
             price = '\n    <div class="price">Contact for price <small>UAE &amp; export enquiries</small></div>'
-            acts = btn.format("btn--ghost", href, "Details") + "\n      " + btn.format("btn--red", "contact.html#enquiry", "Enquire")
+            acts = btn.format("btn--ghost", href, "Details") + "\n      " + qbtn.format(quote_attrs("sale", f"{y} {m}"), "Enquire")
     sold_cls = " is-sold" if variant == "sold" else ""
     return f'''<article class="machine-card{sold_cls} cpe-card cpe-card--{variant}" data-cpe-item {item_data_attrs(it)}{" hidden" if hidden else ""}>
   {top}{pic}
@@ -500,7 +502,7 @@ def listing_empty(ctx):
     <h3 class="cpe-listing-empty__title" data-cpe-empty-title>{c["title"]}</h3>
     <p class="cpe-listing-empty__text">{c["text"]}</p>
     <div class="cpe-listing-empty__actions">
-      <a class="btn btn--red" href="contact.html?need={c["need"]}#enquiry" data-cpe-empty-quote>Tell us your spec</a>
+      <a class="btn btn--red" href="contact.html?need={c["need"]}#enquiry" {quote_attrs({"rent": "rental", "buy": "sale"}[c["need"]])} data-cpe-empty-quote>Tell us your spec</a>
       <a class="btn btn--wa" href="{wa_url(c["wa"])}" data-cpe-empty-wa>{icon("wa")} WhatsApp</a>
       <button type="button" class="btn btn--ghost" data-cpe-clear-filters hidden>Clear filters</button>
     </div>{try_html}
@@ -610,7 +612,7 @@ def page_rental_landing():
         </div>
       </a>''')
     # Spider lifts: not in the current fleet, so the tile goes to an enquiry instead of a category page
-    tiles.append(f'''<a class="tile" href="contact.html#enquiry">
+    tiles.append(f'''<a class="tile" href="contact.html#enquiry" {quote_attrs("rental", category=QUOTE_CATEGORIES[-1])}>
         {media('cat-spider-sm', 'Tracked spider lift for rent in Dubai', 'tile-img')}
         <div class="tile-body">
           <span class="tile-meta">On request</span>
@@ -719,7 +721,7 @@ def page_rental_landing():
           <li>You set up on slopes, steps or uneven ground (outriggers level the machine)</li>
           <li>Atriums, lobbies, glazing and tree work, indoors or outdoors</li>
         </ul>
-        <a class="link-arrow" href="contact.html#enquiry">Ask about spider lifts →</a>
+        <a class="link-arrow" href="contact.html#enquiry" {quote_attrs("rental", category=QUOTE_CATEGORIES[-1])}>Ask about spider lifts →</a>
       </div>
     </div>
   </div>
@@ -805,7 +807,7 @@ def page_rental_all():
         <p class="lead">Our full rental fleet: {N_RENTAL} scissor lift and boom lift models from 7.8 m to 43 m working height. Filter by machine type, working height and brand.</p>
       </div>
       <div class="listing-hero-cta">
-        <a class="btn btn--red btn--block" href="contact.html#enquiry">Get a Quote</a>
+        <a class="btn btn--red btn--block" href="contact.html#enquiry" {quote_attrs("rental")}>Get a Quote</a>
         <a class="btn btn--wa btn--block" href="{{{{WA_LINK}}}}">{icon("wa")} WhatsApp</a>
       </div>
     </div>
@@ -852,7 +854,7 @@ def page_rental_category(c):
         <p class="lead">{intro}</p>
       </div>
       <div class="listing-hero-cta">
-        <a class="btn btn--red btn--block" href="contact.html#enquiry">Get a Quote</a>
+        <a class="btn btn--red btn--block" href="contact.html#enquiry" {quote_attrs("rental", category=c["one"].capitalize())}>Get a Quote</a>
         <a class="btn btn--wa btn--block" href="{{{{WA_LINK}}}}">{icon("wa")} WhatsApp</a>
       </div>
     </div>
@@ -1079,7 +1081,7 @@ def sales_hero(h1, lead, img, alt, extra=""):
         <p class="lead">{lead}</p>
       </div>
       <div class="listing-hero-cta">
-        <a class="btn btn--red btn--block" href="contact.html#enquiry">Send an Enquiry</a>
+        <a class="btn btn--red btn--block" href="contact.html#enquiry" {quote_attrs("sale")}>Send an Enquiry</a>
         <a class="btn btn--wa btn--block" href="{{{{WA_LINK}}}}">{icon("wa")} WhatsApp Sales</a>
       </div>
     </div>
@@ -1115,7 +1117,7 @@ def page_sales_new():
       <h2>New Equipment on Request</h2>
       <p>Tell us the machine you need and we'll send price and delivery time. [Confirm which brands you sell new.]</p>
       <div class="hero-actions" style="justify-content:center">
-        <a class="btn btn--red" href="contact.html#enquiry">Send an Enquiry</a>
+        <a class="btn btn--red" href="contact.html#enquiry" {quote_attrs("sale")}>Send an Enquiry</a>
         <a class="btn btn--wa" href="{{{{WA_LINK}}}}">{icon("wa")} WhatsApp</a>
       </div>
       <p class="mt-24"><a class="link-arrow" href="sales-used.html">Browse Used Equipment →</a></p>
@@ -1282,7 +1284,7 @@ def page_sold_detail(s):
       </div>
       <div class="price" style="font-size:1.6rem;margin-bottom:16px">No longer available <small>We can source a similar {m} – UAE and export enquiries welcome</small></div>
       <div class="detail-actions">
-        <a class="btn btn--red btn--block" href="contact.html#enquiry">Find Me a Similar Machine</a>
+        <a class="btn btn--red btn--block" href="contact.html#enquiry" {quote_attrs("sale", m, sold=True)}>Find Me a Similar Machine</a>
         <div class="row">
           <a class="btn btn--wa" href="{{{{WA_LINK}}}}" style="justify-content:center">{icon("wa")} WhatsApp</a>
           <a class="btn btn--navy" href="{{{{PHONE_LINK}}}}" style="justify-content:center">{icon("phone")} Call</a>
@@ -1324,15 +1326,14 @@ def page_sold_detail(s):
     <aside class="side-box">
       <h3>Find me a {m}</h3>
       <p class="small muted">Similar to this {y} unit · {tname}</p>
-      <form data-mock>
+      <form data-quote-form="inline" novalidate>
+        <input type="hidden" name="enquiry_type" value="sale"><input type="hidden" name="machine" value="{esc(m)}">
         <div class="form-grid" style="grid-template-columns:1fr">
-          <div class="field"><label>Name <span class="req">*</span></label><input required></div>
-          <div class="field"><label>Phone / WhatsApp <span class="req">*</span></label><input required></div>
-          <div class="field"><label>Year range</label><input placeholder="e.g. {y - 2} – {y + 3}"></div>
-          <div class="field"><label>Country</label><input placeholder="UAE or export country"></div>
-          <button class="btn btn--red btn--block" type="submit">Send request</button>
+          {lite_contact_fields("qs-", "Phone / WhatsApp")}
+          <div class="field"><label for="qs-years">Year range</label><input id="qs-years" name="year_range" placeholder="e.g. {y - 2} – {y + 3}"></div>
+          <div class="field"><label for="qs-country">Country</label><input id="qs-country" name="country" autocomplete="country-name" placeholder="UAE or export country"></div>
+          {lite_foot("qs-", "Send request")}
         </div>
-        <div class="form-ok">Thanks – this is a mockup, nothing was sent.</div>
       </form>
     </aside>
   </div>
@@ -1376,9 +1377,9 @@ def header(active):
       </ul>
     </nav>
     <div class="header-actions">
-      <a class="header-phone" href="{PHONE_LINK}">{icon("phone")}<span>{PHONE}</span></a>
-      <a class="icon-btn" href="{WA_LINK}" aria-label="WhatsApp">{WA_SVG}</a>
-      <a class="btn btn--red btn--sm" href="contact.html#enquiry">Get a Quote</a>
+      <a class="header-phone" href="{PHONE_LINK}" aria-label="Call {PHONE}">{icon("phone")}<span>{PHONE}</span></a>
+      <a class="icon-btn" href="{WA_LINK}" aria-label="WhatsApp us" target="_blank" rel="noopener">{WA_SVG}</a>
+      <a class="btn btn--red btn--sm" href="contact.html#enquiry" {quote_attrs()}>Get a Quote</a>
     </div>
     <button class="menu-toggle" aria-label="Open menu" aria-expanded="false"><span></span></button>
   </div>
@@ -1445,7 +1446,7 @@ def footer():
 <nav class="mobile-bar" aria-label="Quick contact">
   <a href="{PHONE_LINK}">{icon("phone")}Call</a>
   <a class="wa" href="{WA_LINK}">{WA_SVG}WhatsApp</a>
-  <a class="quote" href="contact.html#enquiry">{icon("quote")}Get a Quote</a>
+  <a class="quote" href="contact.html#enquiry" {quote_attrs()}>{icon("quote")}Get a Quote</a>
 </nav>'''
 
 
@@ -1507,7 +1508,7 @@ def home_rcard(key):
           <div class="specs"><div><strong>{wh:g} m</strong><span>Working ht.</span></div>{mid}<div><strong>{cap} kg</strong><span>Capacity</span></div></div>
           <div class="mc-btns">
             <a class="btn btn-out btn-sm" href="machine-{k}.html">Details</a>
-            <a class="btn btn-red btn-sm" href="#enquiry" data-want="rent">Get a Quote</a>
+            <a class="btn btn-red btn-sm" href="#enquiry" {quote_attrs("rental", m, c["one"].capitalize())}>Get a Quote</a>
             <a class="btn btn-wa btn-icon" href="{wa_url(f"Hi, I need a quote for the {m}.")}" target="_blank" rel="noopener" aria-label="WhatsApp about {m}">{WA_SVG}</a>
           </div>
         </div>
@@ -1532,7 +1533,7 @@ def home_scard(key):
           <div class="specs four"><div><strong>{wh:g} m</strong><span>Working ht.</span></div><div><strong>{hours}</strong><span>Hours</span></div><div><strong>{y}</strong><span>Year</span></div><div><strong>{origin}</strong><span>Origin</span></div></div>
           <div class="price"><b>Contact for price</b>UAE &amp; export enquiries</div>
           <div class="mc-btns">
-            <a class="btn btn-navy btn-sm" href="#enquiry" data-want="buy">Enquire to Buy</a>
+            <a class="btn btn-navy btn-sm" href="#enquiry" {quote_attrs("sale", f"{y} {m}")}>Enquire to Buy</a>
             <a class="btn btn-wa btn-icon" href="{wa_url(f"Hi, I'm interested in buying the used {y} {m}.")}" target="_blank" rel="noopener" aria-label="WhatsApp about the {y} {m}">{WA_SVG}</a>
           </div>
         </div>
@@ -1572,8 +1573,8 @@ def header_home():
     </nav>
     <div class="hdr-cta">
       <a class="hdr-phone" href="{PHONE_LINK}" aria-label="Call {PHONE}">{icon("phone")}<span>{PHONE}</span></a>
-      <a class="btn btn-wa btn-icon" href="{WA_LINK}" target="_blank" rel="noopener" aria-label="WhatsApp">{WA_SVG}</a>
-      <a class="btn btn-red btn-sm" href="#enquiry" data-want="rent">Get a Quote</a>
+      <a class="btn btn-wa btn-icon" href="{WA_LINK}" target="_blank" rel="noopener" aria-label="WhatsApp us">{WA_SVG}</a>
+      <a class="btn btn-red btn-sm" href="#enquiry" {quote_attrs()}>Get a Quote</a>
       <button class="burger" id="burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
     </div>
   </div>
@@ -1584,7 +1585,7 @@ def header_home():
     <nav aria-label="Mobile">
       <ul>{drawer}</ul>
     </nav>
-    <a class="btn btn-red" href="#enquiry" data-want="rent">Get a Quote</a>
+    <a class="btn btn-red" href="#enquiry" {quote_attrs()}>Get a Quote</a>
     <a class="btn btn-wa" href="{WA_LINK}" target="_blank" rel="noopener">{WA_SVG} WhatsApp Us</a>
   </div>
 </div>'''
@@ -1619,7 +1620,7 @@ def footer_home():
 <nav class="mbar" aria-label="Quick contact">
   <a href="{PHONE_LINK}">{icon("phone")}Call</a>
   <a class="wa" href="{WA_LINK}" target="_blank" rel="noopener">{WA_SVG}WhatsApp</a>
-  <a class="q" href="#enquiry" data-want="rent">{icon("quote")}Get a Quote</a>
+  <a class="q" href="#enquiry" {quote_attrs()}>{icon("quote")}Get a Quote</a>
 </nav>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo viewer"><button id="lbX" type="button" aria-label="Close">&times;</button><img id="lbImg" alt=""><p id="lbCap"></p></div>'''
 
@@ -1649,6 +1650,7 @@ PAGE = """<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="{fonts}" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/{css}">
+<link rel="stylesheet" href="assets/css/quote-modal.css">
 {head_extra}{cpe_config}</head>
 <body{body_class}>
 {header}
@@ -1657,38 +1659,60 @@ PAGE = """<!DOCTYPE html>
 {body}
 </main>
 {footer}
-<script src="assets/js/main.js" defer></script>
+{quote_modal}<script src="assets/js/main.js" defer></script>
+<script src="assets/js/quote-modal.js" defer></script>
 {scripts}</body>
 </html>
 """
 
 
 # ------------------------------------------------------------------ shared enquiry section (above the footer on every page)
+# "Light touch" quote forms: each variant keeps its own fields; validation, success message and tracking come from
+# assets/js/quote-modal.js (form[data-quote-form]). ids use the 'qe-' prefix (sidebar forms use 'qs-').
 EMIRATES = "".join(f"<option>{e}</option>" for e in ("Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Fujairah", "Umm Al Quwain"))
+CAT_OPTIONS = '<option value="">Not sure – advise me</option>' + "".join(f"<option>{c}</option>" for c in QUOTE_CATEGORIES)
+
+
+def lite_contact_fields(p, phone_label="Phone / WhatsApp"):
+    """Name + phone for the light-touch forms (same names, types and autocomplete as the popup)."""
+    return (f'<div class="field"><label for="{p}name">Name <span class="req" aria-hidden="true">*</span></label>'
+            f'<input id="{p}name" name="name" required autocomplete="name"></div>\n'
+            f'          <div class="field"><label for="{p}phone">{phone_label} <span class="req" aria-hidden="true">*</span></label>'
+            f'<input id="{p}phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required placeholder="+971 50 123 4567"></div>')
+
+
+def lite_foot(p, button):
+    """Status line, submit button and honeypot for the light-touch forms."""
+    return (f'<div class="full"><div class="qf-status" role="alert" hidden></div>'
+            f'<button class="btn btn--red btn--block" type="submit">{button}</button>'
+            f'<div class="qf-hp" aria-hidden="true"><label for="{p}website">Website</label>'
+            f'<input id="{p}website" name="website" tabindex="-1" autocomplete="off"></div></div>')
+
+
 ENQ = {
     "rental": dict(
-        eyebrow="Get a quote", title="Need a Machine for Your Project?",
+        eyebrow="Get a quote", title="Need a Machine for Your Project?", type="rental",
         text="Tell us the working height, the job and the site location. We'll suggest the right machine and send a quote.",
         tip="WhatsApp site photos and job details",
-        fields='''<div class="field"><label>Machine needed</label><select><option>Not sure – advise me</option><option>Electric scissor lift</option><option>Rough terrain scissor lift</option><option>Electric boom lift</option><option>Articulated boom lift</option><option>Telescopic boom lift</option><option>Spider lift</option></select></div>
-        <div class="field"><label>Emirate</label><select>''' + EMIRATES + '''</select></div>
-        <div class="field full"><label>Job details</label><textarea placeholder="Working height, type of work, site location and dates"></textarea></div>''',
+        fields='''<div class="field"><label for="qe-category">Machine needed</label><select id="qe-category" name="machine_category">''' + CAT_OPTIONS + '''</select></div>
+        <div class="field"><label for="qe-emirate">Emirate</label><select id="qe-emirate" name="emirate">''' + EMIRATES + '''</select></div>
+        <div class="field full"><label for="qe-details">Job details</label><textarea id="qe-details" name="details" placeholder="Working height, type of work, site location and dates"></textarea></div>''',
         button="Send enquiry"),
     "sales": dict(
-        eyebrow="Buy a machine", title="Looking for a Specific Machine?",
+        eyebrow="Buy a machine", title="Looking for a Specific Machine?", type="sale",
         text="Tell us the model, year or working height you need. We source used boom lifts and scissor lifts worldwide.",
         tip="WhatsApp for photos and walk-around videos",
-        fields='''<div class="field"><label>Machine or model</label><input placeholder="e.g. JLG 860SJ"></div>
-        <div class="field"><label>Country</label><input placeholder="UAE or export country"></div>
-        <div class="field full"><label>Message</label><textarea placeholder="Year range, working height, quantity or any questions"></textarea></div>''',
+        fields='''<div class="field"><label for="qe-model">Machine or model</label><input id="qe-model" name="machine_model" placeholder="e.g. JLG 860SJ"></div>
+        <div class="field"><label for="qe-country">Country</label><input id="qe-country" name="country" autocomplete="country-name" placeholder="UAE or export country"></div>
+        <div class="field full"><label for="qe-details">Message</label><textarea id="qe-details" name="details" placeholder="Year range, working height, quantity or any questions"></textarea></div>''',
         button="Send enquiry"),
     "service": dict(
-        eyebrow="Book a service", title="Tell Us About Your Machine",
+        eyebrow="Book a service", title="Tell Us About Your Machine", type="service",
         text="Send the brand, model and problem. Our workshop team will call you back.",
         tip="WhatsApp photos or videos of the fault",
-        fields='''<div class="field"><label>Machine brand &amp; model</label><input placeholder="e.g. Genie GS-3246"></div>
-        <div class="field"><label>Emirate</label><select>''' + EMIRATES + '''</select></div>
-        <div class="field full"><label>Problem</label><textarea placeholder="What's wrong with the machine?"></textarea></div>''',
+        fields='''<div class="field"><label for="qe-smachine">Machine brand &amp; model</label><input id="qe-smachine" name="service_machine" placeholder="e.g. Genie GS-3246"></div>
+        <div class="field"><label for="qe-emirate">Emirate</label><select id="qe-emirate" name="emirate">''' + EMIRATES + '''</select></div>
+        <div class="field full"><label for="qe-details">Problem</label><textarea id="qe-details" name="details" placeholder="What's wrong with the machine?"></textarea></div>''',
         button="Send request"),
 }
 
@@ -1708,14 +1732,13 @@ def enquiry(kind="rental", title=None, text=None):
         <li>Mon–Sat 9:00–19:00</li>
       </ul>
     </div>
-    <form class="form-card" data-mock>
+    <form class="form-card" data-quote-form="inline" novalidate>
+      <input type="hidden" name="enquiry_type" value="{e["type"]}">
       <div class="form-grid">
-        <div class="field"><label>Name <span class="req">*</span></label><input required></div>
-        <div class="field"><label>Phone <span class="req">*</span></label><input required placeholder="+971"></div>
+        {lite_contact_fields("qe-")}
         {e["fields"]}
-        <div class="full"><button class="btn btn--red btn--block" type="submit">{e["button"]}</button></div>
+        {lite_foot("qe-", e["button"])}
       </div>
-      <div class="form-ok">Thanks – this is a mockup, nothing was sent.</div>
     </form>
   </div>
 </section>'''
@@ -1787,6 +1810,18 @@ def render_tokens(html, kind="rental"):
     html = (html.replace("{{GOOGLE_REVIEWS_URL}}", GOOGLE_REVIEWS_URL).replace("{{GOOGLE_WRITE_REVIEW_URL}}", GOOGLE_WRITE_REVIEW_URL)
             .replace("{{BREAKDOWN}}", BREAKDOWN).replace("{{BREAKDOWN_LINK}}", BREAKDOWN_LINK).replace("{{tick}}", TICK))
     html = re.sub(r"\{\{form(?::([^}]*))?\}\}", lambda m: quick_form(m.group(1) or "Quick enquiry"), html)
+
+    # {{quotefields:prefix|type|machine|category|flags}} -> shared quote fields (quote.py); flags: notoggle, sold
+    def _qf(m):
+        p = (m.group(1).split("|") + [""] * 5)[:5]
+        return quote_inline(p[0], p[1] or "rental", p[2], p[3], "notoggle" not in p[4], "sold" in p[4])
+    html = re.sub(r"\{\{quotefields:([^}]*)\}\}", _qf, html)
+
+    # {{quote}} / {{quote:type|machine|category}} -> quote trigger attributes (quote.py)
+    def _qa(m):
+        p = ((m.group(1) or "").split("|") + [""] * 3)[:3]
+        return quote_attrs(p[0], p[1], p[2])
+    html = re.sub(r"\{\{quote(?::([^}]*))?\}\}", _qa, html)
 
     # {{cta}} / {{cta:title|text}} / {{cta:title|text|kind}} -> shared enquiry section
     def _c(m):
@@ -1960,12 +1995,18 @@ def build():
                            head_extra=home_faq_jsonld() if home else "", cpe_config=cpe_config, scripts=scripts,
                            body_class=' class="home"' if home else "",
                            header=header_home() if home else header(active), crumbs=crumbs_html, body=body_html,
-                           footer=footer_home() if home else footer())
+                           footer=footer_home() if home else footer(),
+                           # quote popup on every page except Contact (its own inline form is the target there)
+                           quote_modal="" if path == "contact/index.html" else quote_modal() + "\n")
         html = wa_prefill(rewrite_links(html, path), path)
         out = OUT / path
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(html, encoding="utf-8")
         built.append(path)
+    # reference copy of the popup markup (WordPress: footer.php / Elementor HTML widget)
+    part = OUT / "assets" / "partials" / "quote-modal.html"
+    part.parent.mkdir(parents=True, exist_ok=True)
+    part.write_text(quote_modal() + "\n", encoding="utf-8")
     print(f"Built {len(built)} pages")
 
 

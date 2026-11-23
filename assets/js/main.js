@@ -11,17 +11,7 @@
 
   // Machine listings (filters, search, sort, pagination, filter drawer) live in listing.js.
 
-  // Contact form: prefill from ?machine=<model>&need=buy|rent (links from the listing "no results" block)
-  (function () {
-    var p = new URLSearchParams(location.search), machine = (p.get('machine') || '').trim();
-    var msg = document.querySelector('form [name=message]'), need = document.querySelector('form [name=need]');
-    if (!machine || !msg) return;
-    if (!msg.value) msg.value = 'Looking for: ' + machine;
-    if (need) {
-      var want = p.get('need') === 'rent' ? 'Rental' : 'To buy a machine';
-      Array.prototype.forEach.call(need.options, function (o) { if (o.text === want) need.value = o.value; });
-    }
-  })();
+  // Quote forms (contact pre-fill, validation, popup) live in quote-modal.js.
 
   // ---------- Blog: filter by category (dropdown) + sort ----------
   var posts = document.querySelector('[data-blog-posts]');
@@ -67,20 +57,9 @@
     });
   });
 
-  // Forms (mockup only – nothing is sent)
-  document.querySelectorAll('form[data-mock]').forEach(function (f) {
-    f.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var ok = f.querySelector('.form-ok');
-      if (ok) ok.style.display = 'block';
-    });
-  });
-
   // =====================================================================
   // HOME PAGE (index.html) – each block only runs if its element exists
   // =====================================================================
-  var WA_NUMBER = '971561018428';
-
   // ---------- Header: shrink on scroll ----------
   (function () {
     var hdr = document.getElementById('hdr');
@@ -215,82 +194,4 @@
     });
   })();
 
-  // ---------- Enquiry form: Rent / Buy / Service, validation, WhatsApp hand-off ----------
-  (function () {
-    var form = document.getElementById('qform');
-    if (!form) return;
-    var $ = function (id) { return document.getElementById(id); };
-    var fm = $('fm'), fmt = $('fmText'), fml = $('fmLabel'), fdw = $('fDateWrap'), fe = $('fe'), feo = $('feOther'),
-        fel = $('feLabel'), fmsg = $('fmsg'), fd = $('fd'), fn = $('fn'), fp = $('fp'), done = $('fDone');
-    var want = function () { var r = form.querySelector('input[name=want]:checked'); return r ? r.value : 'rent'; };
-
-    var setWant = function (v) {
-      fm.hidden = v !== 'rent';
-      fmt.hidden = v === 'rent';
-      fml.textContent = v === 'rent' ? 'Machine or height' : v === 'buy' ? 'Machine you want to buy' : 'Your machine (make / model)';
-      fml.htmlFor = v === 'rent' ? 'fm' : 'fmText';
-      fmt.placeholder = v === 'buy' ? 'e.g. JLG 860SJ' : 'e.g. Genie S-65';
-      fdw.hidden = v === 'buy';
-      feo.hidden = feo.disabled = v !== 'buy';
-      if (v !== 'buy' && fe.selectedIndex === feo.index) fe.selectedIndex = 0;
-      fel.textContent = v === 'buy' ? 'Delivery to' : 'Emirate';
-      fmsg.placeholder = v === 'rent' ? 'Working height, type of work, site location, hire period'
-        : v === 'buy' ? 'Budget, quantity, destination country' : 'Problem, machine location, AMC or one-off repair';
-    };
-    form.querySelectorAll('input[name=want]').forEach(function (r) {
-      r.addEventListener('change', function () { setWant(r.value); });
-    });
-    setWant(want());
-
-    // "Get a Quote" / "Enquire to Buy" / "Book a service" links preselect the matching option
-    document.querySelectorAll('a[data-want]').forEach(function (a) {
-      a.addEventListener('click', function () {
-        var r = form.querySelector('input[name=want][value="' + a.getAttribute('data-want') + '"]');
-        if (r) { r.checked = true; setWant(r.value); }
-      });
-    });
-
-    var showErr = function (input, errId, bad) {
-      var wrap = input.closest('.f'), err = $(errId);
-      wrap.classList.toggle('err', bad);
-      err.hidden = !bad;
-      input.setAttribute('aria-invalid', bad ? 'true' : 'false');
-      return bad;
-    };
-    fn.addEventListener('input', function () { if (fn.closest('.f').classList.contains('err')) showErr(fn, 'fnErr', !fn.value.trim()); });
-    fp.addEventListener('input', function () { if (fp.closest('.f').classList.contains('err')) showErr(fp, 'fpErr', fp.value.replace(/\D/g, '').length < 7); });
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var name = fn.value.trim(), digits = fp.value.replace(/\D/g, '');
-      var badName = showErr(fn, 'fnErr', !name);
-      var badPhone = showErr(fp, 'fpErr', digits.length < 7 || digits.length > 15);
-      if (badName || badPhone) { (badName ? fn : fp).focus(); return; }
-
-      var v = want();
-      var phone = /^\s*(\+|00)/.test(fp.value) ? '+' + digits.replace(/^00/, '') : '+971 ' + digits.replace(/^0+/, '');
-      var machine = v === 'rent' ? fm.value : fmt.value.trim();
-      var lines = [
-        'Hi Cherry Pickers Equipment, ' + (v === 'rent' ? "I'd like a rental quote." : v === 'buy' ? "I'd like to buy a machine." : 'I need a service / repair.'),
-        'Name: ' + name,
-        'Phone: ' + phone
-      ];
-      if (machine) lines.push((v === 'rent' ? 'Machine or height: ' : v === 'buy' ? 'Machine: ' : 'My machine: ') + machine);
-      lines.push((v === 'buy' ? 'Delivery to: ' : 'Emirate: ') + fe.value);
-      if (v !== 'buy' && fd.value) lines.push('Start date: ' + fd.value);
-      if (fmsg.value.trim()) lines.push('Details: ' + fmsg.value.trim());
-
-      // TODO(backend): send the lead to the real form handler here (e.g. a WordPress form plugin or an email
-      // endpoint), routed to Rental & Maintenance LLC (rent / service) or Equipment LLC (buy). Show the thank-you
-      // message on success and keep the WhatsApp hand-off below only as a fallback.
-      var url = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(lines.join('\n'));
-      done.textContent = 'Thanks, ' + name + ' – opening WhatsApp with your enquiry. Just press send. ';
-      var a = document.createElement('a');
-      a.href = url; a.target = '_blank'; a.rel = 'noopener';
-      a.textContent = "WhatsApp didn't open? Tap here.";
-      done.appendChild(a);
-      var w = window.open(url, '_blank');
-      if (w) { try { w.opener = null; } catch (err) { /* ignore */ } } else { window.location.href = url; }
-    });
-  })();
 })();

@@ -33,7 +33,7 @@
     </form>
     <div class="hero-cta">
       <div class="hero-btns">
-        <a class="btn btn-red" href="#enquiry" data-want="rent">Get a Quote</a>
+        <a class="btn btn-red" href="#enquiry" {{quote}}>Get a Quote</a>
         <a class="btn btn-wa" href="{{wa:Hi, I need a boom lift or scissor lift for my project.}}" target="_blank" rel="noopener">{{icon:wa}} WhatsApp Us</a>
       </div>
       <!-- TODO: sample rating – replace 4.9 / 52 reviews with the real Google Business Profile figures before launch -->
@@ -76,7 +76,7 @@
           <h3>Maintenance &amp; Repair</h3>
           <p>Keep boom lifts and scissor lifts running – including machines you own.</p>
           <ul class="ticks"><li>{{tick}}AMC (annual maintenance contracts)</li><li>{{tick}}On-site repairs</li><li>{{tick}}Workshop services</li></ul>
-          <a class="btn btn-out btn-sm" href="#enquiry" data-want="service">Book a service →</a>
+          <a class="btn btn-out btn-sm" href="#enquiry" {{quote:service}}>Book a service →</a>
           <div class="entity">Cherry Pickers Equipment Rentals &amp; Maintenance LLC</div>
         </div>
       </article>
@@ -94,7 +94,7 @@
       <a class="cat" href="rental-electric-boom-lifts.html"><div class="cat-img">{{img:cat-electric-boom-sm|Electric boom lift rental in Dubai}}</div><div class="cat-body"><h3>Electric Boom Lifts</h3><span class="badge-h">13.5 – 20.4 m</span><p>Reach up and over, indoors or in noise-sensitive areas.</p></div></a>
       <a class="cat" href="rental-articulated-boom-lifts.html"><div class="cat-img">{{img:cat-articulated-sm|Articulated boom lift rental in Dubai}}</div><div class="cat-body"><h3>Articulated Boom Lifts</h3><span class="badge-h">15.7 – 43.2 m</span><p>Bend around obstacles to reach tight spots.</p></div></a>
       <a class="cat" href="rental-telescopic-boom-lifts.html"><div class="cat-img">{{img:cat-telescopic-sm|Telescopic boom lift rental in Dubai}}</div><div class="cat-body"><h3>Telescopic Boom Lifts</h3><span class="badge-h">15.7 – 28.2 m</span><p>Maximum straight reach for facades and steel work.</p></div></a>
-      <a class="cat" href="#enquiry" data-want="rent"><div class="cat-img">{{img:cat-spider-sm|Tracked spider lift rental in Dubai}}</div><div class="cat-body"><h3>Spider Lifts</h3><span class="badge-h">On request</span><p>Compact tracked booms for tight access, slopes and delicate floors.</p></div></a>
+      <a class="cat" href="#enquiry" {{quote:rental||Spider lift (coming soon)}}><div class="cat-img">{{img:cat-spider-sm|Tracked spider lift rental in Dubai}}</div><div class="cat-body"><h3>Spider Lifts</h3><span class="badge-h">On request</span><p>Compact tracked booms for tight access, slopes and delicate floors.</p></div></a>
       <a class="cat cat-ask" href="{{wa:Hi, I'm not sure which machine I need. Can you advise?}}" target="_blank" rel="noopener">{{icon:wa}}<div><h3>Not sure?</h3><p>Send a site photo on WhatsApp – we'll suggest the machine.</p></div></a>
     </div>
   </div>
@@ -133,7 +133,7 @@
     </div></div>
     <div class="proj-cta">
       <div><h3>Need this for your project?</h3><p>Tell us the height and the site – we'll suggest the right machine.</p></div>
-      <div><a class="btn btn-wa" href="{{wa:Hi, I saw your project photos. I need a machine for my site.}}" target="_blank" rel="noopener">{{icon:wa}} WhatsApp Us</a><a class="btn btn-red" href="#enquiry" data-want="rent">Get a Quote</a></div>
+      <div><a class="btn btn-wa" href="{{wa:Hi, I saw your project photos. I need a machine for my site.}}" target="_blank" rel="noopener">{{icon:wa}} WhatsApp Us</a><a class="btn btn-red" href="#enquiry" {{quote}}>Get a Quote</a></div>
     </div>
   </div>
 </section>
@@ -243,34 +243,10 @@
         <li><span class="ci">{{icon:pin}}</span><div><small>Yard &amp; office</small><b>Saih Shuaib 4, Dubai Industrial City, Dubai</b></div></li>
       </ul>
     </div>
-    <form class="form-card" id="qform" novalidate>
+    <form class="form-card qf" id="qform" data-quote-form="inline" novalidate>
       <h3>Request a Quote</h3>
-      <p>Takes under a minute. Only name and phone are required.</p>
-      <div class="seg" role="radiogroup" aria-label="I want to">
-        <label><input type="radio" name="want" value="rent" checked><span>Rent</span></label>
-        <label><input type="radio" name="want" value="buy"><span>Buy</span></label>
-        <label><input type="radio" name="want" value="service"><span>Service</span></label>
-      </div>
-      <div class="f-row">
-        <div class="f"><label for="fn">Name <span aria-hidden="true">*</span></label><input id="fn" name="name" required autocomplete="name" aria-describedby="fnErr"><span class="f-err" id="fnErr" hidden>Please enter your name.</span></div>
-        <div class="f"><label for="fp">Phone <span aria-hidden="true">*</span></label><div class="tel"><span>+971</span><input id="fp" name="phone" type="tel" inputmode="tel" required autocomplete="tel-national" placeholder="50 123 4567" aria-describedby="fpErr"></div><span class="f-err" id="fpErr" hidden>Please enter a phone number we can call or WhatsApp.</span></div>
-      </div>
-      <div class="f-row">
-        <div class="f" id="fMachineWrap"><label for="fm" id="fmLabel">Machine or height</label>
-          <select id="fm" name="machine">
-            <option>Not sure – advise me</option><option>Up to 12 m</option><option>12 – 20 m</option><option>20 – 30 m</option><option>30 m +</option>
-            <option>Electric scissor lift</option><option>Rough terrain scissor lift</option><option>Electric boom lift</option><option>Articulated boom lift</option><option>Telescopic boom lift</option>
-          </select>
-          <input id="fmText" name="model" hidden placeholder="e.g. JLG 860SJ" aria-labelledby="fmLabel">
-        </div>
-        <div class="f"><label for="fe" id="feLabel">Emirate</label>
-          <select id="fe" name="emirate"><option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Umm Al Quwain</option><option id="feOther" hidden disabled>Outside UAE (export)</option></select></div>
-      </div>
-      <div class="f" id="fDateWrap"><label for="fd">Start date <i>(optional)</i></label><input id="fd" name="date" type="date"></div>
-      <div class="f"><label for="fmsg">Job details <i>(optional)</i></label><textarea id="fmsg" name="details" placeholder="Working height, type of work, site location, hire period"></textarea></div>
-      <button class="btn btn-red" type="submit">Send Enquiry</button>
-      <p class="f-note">We reply during working hours, Mon – Sat 9:00 – 19:00.</p>
-      <div class="f-done" id="fDone" role="status" aria-live="polite"></div>
+      <p>Takes under a minute. Only name and phone are required. We reply within working hours, Mon – Sat 9:00 – 19:00.</p>
+      {{quotefields:qh-}}
     </form>
   </div>
 </section>

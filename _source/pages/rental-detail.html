@@ -23,7 +23,7 @@
         <div><strong>Electric</strong>Power</div>
       </div>
       <div class="detail-actions">
-        <a class="btn btn--red btn--block" href="contact.html#enquiry">Get a Quote for This Machine</a>
+        <a class="btn btn--red btn--block" href="contact.html#enquiry" {{quote:rental|Genie GS-3246|Electric scissor lift}}>Get a Quote for This Machine</a>
         <div class="row">
           <a class="btn btn--wa" href="{{WA_LINK}}" style="justify-content:center">{{icon:wa}} WhatsApp</a>
           <a class="btn btn--navy" href="{{PHONE_LINK}}" style="justify-content:center">{{icon:phone}} Call</a>
@@ -41,7 +41,7 @@
 </section>
 
 <section class="section section--alt" style="padding-top:56px">
-  <div class="wrap two-col">
+  <div class="wrap two-col two-col--quote">
     <div class="content">
       <!-- 2. ABOUT THIS MACHINE: your own words, 80–150 words -->
       <h2>About the Genie GS-3246</h2>
@@ -82,11 +82,12 @@
         <details><summary><h3>Can the GS-3246 fit through a standard door?</h3></summary><div><p>[Your answer – add the stowed width from the spec sheet.]</p></div></details>
       </div>
     </div>
-    <!-- Sticky side box on desktop -->
-    <aside class="side-box">
-      <h3>Rent the GS-3246</h3>
+    <!-- Sticky quote form on desktop (1024px+). Below that it is hidden: the Get a Quote button opens the popup
+         and the shared enquiry section at the bottom of the page is the inline form. -->
+    <aside class="side-box side-box--quote" aria-labelledby="qs-heading">
+      <h3 id="qs-heading">Rent the GS-3246</h3>
       <p class="small muted">Tell us your site location and dates.</p>
-      {{form:Quick quote}}
+      <form class="qf" data-quote-form="inline" novalidate>{{quotefields:qs-|rental|Genie GS-3246|Electric scissor lift|notoggle}}</form>
     </aside>
   </div>
 </section>

@@ -211,3 +211,32 @@ The mockup recomputes these on every change (`renderFacetCounts()`). **The WordP
 - All cards are output, with the ones beyond page 1 marked `hidden`, and the JS paginates them. WordPress renders only the current page.
 - `CPE_PAGE` / `listing()` setting the config while a page renders: that's just how the static builder places `window.CPE`.
 - `{{card:status:slug}}`, `{{hrcard:…}}`, `{{hscard:…}}` tokens in `_source/pages/*.html`: the hand-written partials' way to include machine cards.
+
+## 7. Quote popup and quote forms
+
+Files: `assets/partials/quote-modal.html` (popup markup, generated from `_source/quote.py`), `assets/css/quote-modal.css`, `assets/js/quote-modal.js`. No libraries.
+
+**Setup in WordPress**
+- Enqueue `quote-modal.css` and `quote-modal.js` (`defer`) on every page.
+- Put the `<dialog id="quote-modal">` markup once, just before `</body>`: `footer.php`, or an Elementor HTML widget in the site-wide footer template. Leave it out on the Contact page, where the quote buttons scroll to the inline form instead.
+- Set `QUOTE_CONFIG.endpoint` at the top of `quote-modal.js` to the form handler URL: an `admin-ajax.php` / REST route, or a form plugin endpoint. It receives a `FormData` POST and must return HTTP 2xx on success. With `endpoint: null` the forms run in mockup mode and send nothing.
+
+**Buttons (template parts):** keep a real link to `/contact/#enquiry` (it is the no-JS fallback) and add the data attributes:
+
+| Button | Attributes |
+|---|---|
+| Header / mobile bar / generic | `data-quote` |
+| Rental card / rental detail | `data-quote data-type="rental" data-machine="{model}" data-category="{machine_type singular, e.g. Electric scissor lift}"` |
+| Used card / sale detail | `data-quote data-type="sale" data-machine="{year} {model}"` |
+| Sold card / sold detail | `data-quote data-type="sale" data-machine="{model}" data-sold` |
+| Service buttons | `data-quote data-type="service"` |
+| Spider lift (coming soon) | `data-quote data-type="rental" data-category="Spider lift (coming soon)"` |
+
+**Inline forms:** any `<form data-quote-form="inline" novalidate>` gets the same validation, success message and tracking. The shared field set (home, Contact, detail sidebars) is `quote_fields()` in `_source/quote.py`. Field groups carry `data-for="rental|sale|service"`, and the JS hides and disables the groups that don't match the chosen type.
+
+**Fields sent:** `enquiry_type` (rental/sale/service), `name`, `phone`, `company`, `email`, `machine` (specific model, hidden), `machine_category`, `machine_model`, `service_needed`, `service_machine`, `emirate`, `country`, `start_date`, `rental_period`, `operator`, `details`, `page_url`, `page_title`, and ad attribution (`gclid`, `gbraid`, `wbraid`, `utm_*`, from `sessionStorage`). Each type only sends its own fields. `website` is a honeypot: the handler should drop any enquiry where it is filled (the JS already shows a fake success and sends nothing).
+
+**Tracking (GTM `dataLayer`):** `generate_lead` {form_id: `quote_popup` | `inline_enquiry`, enquiry_type, machine} on success; `whatsapp_click` {location: `quote_popup`, machine} from the popup's WhatsApp buttons.
+
+**Links from ads:** `#quote` on any URL opens the popup (`#enquiry` too, on pages without an `#enquiry` section). `?machine=`, `?type=rental|sale|service` (or `?need=rent|buy`) and `?category=` pre-fill it.
+

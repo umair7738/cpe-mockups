@@ -14,3 +14,5 @@ Note: build.py writes to the folder above `_source/` (`OUT` at the top of both .
 Folder URLs mirror the WordPress site: /rental/{category}/, /sales/, /sales/new/, /sales/used/, /sales/sold/.
 New equipment: add machines with `"listing_status": "new"` to `data/machines.json`. While there are none, /sales/new/ shows an enquiry panel and is noindexed.
 Listing pages (used, sold, rental) are driven by `assets/js/listing.js`; filters, search and paging are in the URL (`?q=`, `m_*`, `m_sort`, `paged`).
+- `quote.py`: markup for the quote popup and the shared quote fields (`{{quotefields:prefix|type|machine|category|notoggle,sold}}` and `{{quote:type|machine|category}}` tokens). `build.py` writes the popup into every page except Contact and copies it to `assets/partials/quote-modal.html`. Behaviour is in `assets/js/quote-modal.js` and the WordPress notes are in `WORDPRESS-MAP.md` section 7.
+

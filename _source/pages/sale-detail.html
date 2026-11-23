@@ -29,7 +29,7 @@
       </div>
       <div class="price" style="font-size:1.6rem;margin-bottom:16px">Contact for price <small>UAE and export enquiries welcome</small></div>
       <div class="detail-actions">
-        <a class="btn btn--red btn--block" href="contact.html#enquiry">Enquire About This Machine</a>
+        <a class="btn btn--red btn--block" href="contact.html#enquiry" {{quote:sale|2010 JLG 600AJ}}>Enquire About This Machine</a>
         <div class="row">
           <a class="btn btn--wa" href="{{WA_LINK}}" style="justify-content:center">{{icon:wa}} WhatsApp</a>
           <a class="btn btn--navy" href="{{PHONE_LINK}}" style="justify-content:center">{{icon:phone}} Call</a>
@@ -41,7 +41,7 @@
 </section>
 
 <section class="section section--alt" style="padding-top:56px">
-  <div class="wrap two-col">
+  <div class="wrap two-col two-col--quote">
     <div class="content">
       <h2>Condition &amp; History</h2>
       <ul class="tick-list">
@@ -78,18 +78,11 @@
       <h2>Shipping &amp; Export</h2>
       <p>[Only if offered: export documents, help with shipping, loading at your Dubai yard, countries you have exported to.]</p>
     </div>
-    <aside class="side-box">
-      <h3>Interested in this machine?</h3>
+    <!-- Sticky quote form on desktop (1024px+); hidden below that (popup + bottom enquiry section instead). -->
+    <aside class="side-box side-box--quote" aria-labelledby="qs-heading">
+      <h3 id="qs-heading">Interested in this machine?</h3>
       <p class="small muted">2010 JLG 600AJ · Australia</p>
-      <form data-mock>
-        <div class="form-grid" style="grid-template-columns:1fr">
-          <div class="field"><label>Name <span class="req">*</span></label><input required></div>
-          <div class="field"><label>Phone / WhatsApp <span class="req">*</span></label><input required></div>
-          <div class="field"><label>Country</label><input placeholder="UAE"></div>
-          <button class="btn btn--red btn--block" type="submit">Send enquiry</button>
-        </div>
-        <div class="form-ok">Thanks – this is a mockup, nothing was sent.</div>
-      </form>
+      <form class="qf" data-quote-form="inline" novalidate>{{quotefields:qs-|sale|2010 JLG 600AJ||notoggle}}</form>
     </aside>
   </div>
 </section>

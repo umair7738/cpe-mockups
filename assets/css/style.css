@@ -1588,3 +1588,13 @@ tbody tr:nth-child(even) { background: #fafbfd; }
   .cpe-listing-filters:not(.is-enhanced) { display: block; position: static; inset: auto; z-index: auto; padding-bottom: 18px; }
   .cpe-listing:has(.cpe-listing-filters:not(.is-enhanced)) .filter-open { display: none; }
 }
+
+/* Detail pages: the sticky quote sidebar is desktop only (1024px+). Below that the Get a Quote button opens the
+   quote popup and the shared enquiry section at the bottom of the page is the inline form. */
+@media (min-width: 1024px) {
+  .side-box--quote { max-height: calc(100vh - 116px); overflow-y: auto; overscroll-behavior: contain; }
+}
+@media (max-width: 1023px) {
+  .side-box--quote { display: none; }
+  .two-col--quote { grid-template-columns: 1fr; }
+}

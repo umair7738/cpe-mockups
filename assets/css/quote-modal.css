@@ -1,0 +1,88 @@
+/* Quote popup + shared quote forms (behaviour: assets/js/quote-modal.js, markup: assets/partials/quote-modal.html).
+   Standalone – does not depend on style.css or home.css, so it can move to WordPress as is. */
+.qm,.qf,[data-quote-form]{--q-navy:#021440;--q-red:#DE1605;--q-red-d:#B81204;--q-gray:#6B6B6B;--q-ink:#1B2233;
+  --q-line:#E3E6EE;--q-field:#7A8499;--q-err:#B81204;--q-wa:#0E7A3E;--q-wa-d:#0A5E30;
+  --q-head:Barlow,"Arial Narrow",Arial,sans-serif}
+.qm [hidden],.qf [hidden],[data-quote-form] [hidden]{display:none!important}
+
+/* ---------- dialog ---------- */
+.qm{box-sizing:border-box;margin:auto;padding:0;border:0;border-radius:8px;width:calc(100% - 32px);max-width:560px;max-height:90vh;
+  overflow:hidden;background:#fff;color:var(--q-ink);font-family:Manrope,"Segoe UI",Arial,sans-serif;font-size:16px;line-height:1.5;
+  box-shadow:0 24px 60px rgba(2,20,64,.35)}
+.qm *,.qm *::before,.qm *::after{box-sizing:border-box}
+.qm[open]{display:flex;flex-direction:column;animation:qm-in .15s ease-out}
+.qm::backdrop{background:rgba(2,20,64,.6);animation:qm-fade .15s ease-out}
+@keyframes qm-in{from{opacity:0;transform:translateY(12px)}}
+@keyframes qm-fade{from{opacity:0}}
+.qm-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 10px 10px 20px;border-bottom:1px solid var(--q-line)}
+.qm-title{margin:0;font:700 1.35rem/1.2 var(--q-head);color:var(--q-navy);overflow-wrap:anywhere}
+.qm-x{flex:none;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:8px;background:none;color:var(--q-navy);cursor:pointer}
+.qm-x:hover{background:#F0F2F7}
+.qm-x svg{width:22px;height:22px}
+.qm-form{flex:1;min-height:0;display:flex;flex-direction:column;margin:0}
+.qm-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 20px 20px}
+.qm-foot{flex:none;padding:12px 20px 14px;border-top:1px solid var(--q-line);background:#fff}
+.qm-desc{margin:0 0 12px;color:var(--q-gray);font-size:.95rem}
+.qm-or{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--q-gray);font-size:.875rem}
+.qm-or::before,.qm-or::after{content:"";flex:1;height:1px;background:var(--q-line)}
+.qm>.qf-success{flex:1;overflow-y:auto;padding:24px 20px}
+@media (max-width:640px){
+  .qm{width:100%;max-width:none;height:100vh;height:100dvh;max-height:none;margin:0;border-radius:0}
+  .qm-foot{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+  .qm>.qf-success{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+}
+
+/* ---------- fields ---------- */
+.qf-toggle{min-width:0;margin:0 0 16px;padding:0;border:0}
+.qf-segs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.qf .qf-seg{position:relative;margin:0}
+.qf-seg input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.qf-seg span{display:flex;align-items:center;justify-content:center;min-height:44px;padding:8px;border:2px solid var(--q-line);border-radius:8px;
+  background:#fff;font:700 1rem/1.1 var(--q-head);color:var(--q-navy);cursor:pointer}
+.qf-seg input:checked+span{border-color:var(--q-red);background:#FDE8E5;color:var(--q-red-d)}
+.qf-seg input:focus-visible+span{outline:2px solid var(--q-navy);outline-offset:2px}
+.qf-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px 16px}
+@media (min-width:641px){.qf-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.side-box .qf-grid{grid-template-columns:minmax(0,1fr)}
+.qf-field{min-width:0}
+.qf-full{grid-column:1/-1}
+.qf label,.qf-legend{display:block;margin:0 0 6px;padding:0;font-size:.875rem;font-weight:700;line-height:1.3;color:var(--q-navy)}
+.qf-req{color:var(--q-red-d)}
+.qf input:not([type=radio]):not([type=checkbox]),.qf select,.qf textarea{display:block;width:100%;min-height:48px;margin:0;padding:11px 12px;
+  border:1px solid var(--q-field);border-radius:8px;background:#fff;color:var(--q-ink);font:inherit;font-size:16px;line-height:1.4}
+.qf textarea{min-height:96px;resize:vertical}
+.qf-check{display:flex;align-items:center;gap:10px;min-height:44px}
+.qf .qf-check label{margin:0;font-weight:600}
+.qf-check input{flex:none;width:22px;height:22px;margin:0;accent-color:var(--q-navy)}
+.qf-hint{font-weight:500;color:var(--q-gray)}
+.qf-hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}
+.qf-foot{margin-top:18px}
+[data-quote-form] [aria-invalid=true]{border-color:var(--q-err)!important;box-shadow:0 0 0 1px var(--q-err)}
+.qf-err{margin:6px 0 0;font-size:.875rem;font-weight:600;line-height:1.35;color:var(--q-err)}
+.qf-status{margin:0 0 10px;padding:10px 12px;border-radius:8px;background:#FDECEA;color:var(--q-err);font-size:.9rem;font-weight:600}
+.qf-status a{color:var(--q-navy);font-weight:700}
+
+/* ---------- buttons ---------- */
+.qf-btn,.qf-wa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;padding:12px 20px;border:0;border-radius:8px;
+  font:700 1.05rem/1.1 var(--q-head);text-decoration:none;cursor:pointer}
+.qf-btn{background:var(--q-red);color:#fff}
+.qf-btn:hover{background:var(--q-red-d)}
+.qf-btn:disabled{cursor:progress;opacity:.75}
+.qf-btn--ghost{background:#fff;color:var(--q-navy);border:2px solid var(--q-navy)}
+.qf-btn--ghost:hover{background:#F0F2F7}
+.qf-wa{background:var(--q-wa);color:#fff}
+.qf-wa:hover{background:var(--q-wa-d)}
+.qf-wa svg{flex:none;width:22px;height:22px}
+.qf-call{margin:8px 0 0;text-align:center;font-size:.875rem;color:var(--q-gray)}
+.qf-call a{color:var(--q-navy);font-weight:700;white-space:nowrap}
+
+/* ---------- success ---------- */
+.qf-success h3{margin:0 0 8px;font:700 1.35rem/1.2 var(--q-head);color:var(--q-navy)}
+.qf-success p{margin:0 0 16px;color:var(--q-ink)}
+.qf-actions{display:grid;gap:10px}
+
+/* ---------- focus: always visible ---------- */
+.qm :focus-visible,.qf :focus-visible,[data-quote-form] :focus-visible{outline:2px solid var(--q-navy);outline-offset:2px}
+.qm .qf-btn:focus-visible,.qm .qf-wa:focus-visible,.qf .qf-btn:focus-visible,.qf .qf-wa:focus-visible{outline:2px solid #fff;outline-offset:-5px;box-shadow:0 0 0 2px var(--q-navy)}
+
+@media (prefers-reduced-motion:reduce){.qm[open],.qm::backdrop{animation:none}}

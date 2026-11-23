@@ -223,7 +223,10 @@
     emptyEl.querySelector('[data-cpe-empty-title]').textContent = q ? d.titleTerm.replace('{term}', q) : d.title;
     var u = new URL(quoteBase, location.href);
     if (q) u.searchParams.set('machine', q); else u.searchParams.delete('machine');
-    emptyEl.querySelector('[data-cpe-empty-quote]').href = u.href;
+    var quote = emptyEl.querySelector('[data-cpe-empty-quote]');
+    quote.href = u.href;
+    // quote popup (quote-modal.js) pre-fills the searched model
+    if (q) quote.setAttribute('data-machine', q); else quote.removeAttribute('data-machine');
     emptyEl.querySelector('[data-cpe-empty-wa]').href = 'https://wa.me/' + CFG.whatsapp + '?text=' +
       encodeURIComponent(q ? d.waTerm.replace('{term}', q) : d.wa);
     emptyEl.querySelector('[data-cpe-clear-filters]').hidden = !hasFilters(s);
