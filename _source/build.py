@@ -1535,7 +1535,7 @@ HOME_RANGE = {"es": "7.8 – 15.7 m", "rt": "15.1 – 18.2 m", "eb": "13.5 – 2
 HOME_NAV = [
     ("Rental", "rental.html", [(c["name"], c["file"], HOME_RANGE[k] + {"es": " · indoor", "rt": " · outdoor"}.get(k, ""))
                                for k, c in CATS.items()] + [("All rental machines →", "rental.html", "")]),
-    ("Sales", "sales.html", [("Used Equipment", "sales-used.html", "Year, hours &amp; photos for every machine"),
+    ("Sales", "sales.html", [("Used Equipment", "sales-used.html", ""),
                              ("New Equipment", "sales-new.html", ""), ("Sold Equipment", "sales-sold.html", "")]),
     ("Services", "services.html", [("AMC", "services-amc.html", "Annual maintenance contracts"),
                                    ("On-site Repairs", "services-on-site-repairs.html", "Breakdown repair at your site"),
