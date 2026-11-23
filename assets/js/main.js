@@ -179,7 +179,7 @@
     });
   })();
 
-  // ---------- Machine finder: rent -> rental/, buy -> sales/used/ with ?m_type=&m_height= ----------
+  // ---------- Machine finder: rent -> rental/all-machines/, buy -> sales/used/ with ?m_type=&m_height= ----------
   (function () {
     var finder = document.getElementById('finder');
     if (!finder) return;

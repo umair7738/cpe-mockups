@@ -2,6 +2,7 @@
 
 Pages mirror the final WordPress URLs as folders with index.html:
   /rental/                       rental landing (SEO content + image category tiles)
+  /rental/all-machines/          filterable list of the whole rental fleet (target of the home page machine finder)
   /rental/{category}/            category listing with category-specific filters
   /sales/                        sales landing (SEO content + image category tiles)
   /sales/new/                    new equipment (empty-state + noindex while NEW is empty)
@@ -34,6 +35,7 @@ LINKS = {
     "about-who-we-work-with.html": "about/who-we-work-with/",
     "about-our-story.html": "about/our-story/",
     "rental.html": "rental/",
+    "rental-all.html": "rental/all-machines/",
     "rental-category.html": "rental/electric-scissor-lifts/",
     "rental-detail.html": "rental/electric-scissor-lifts/genie-gs-3246/",
     "sales.html": "sales/",
@@ -618,7 +620,7 @@ def page_rental_landing():
         </div>
       </a>''')
     # height finder table
-    bands = [(0, 10, "Up to 10 m"), (10, 16, "10 – 16 m"), (16, 22, "16 – 22 m"), (22, 99, "22 m and above")]
+    bands = RENTAL_BANDS
     rows = []
     for lo, hi, lab in bands:
         cells = []
@@ -627,12 +629,6 @@ def page_rental_landing():
             if ms:
                 cells.append(f'<a href="{c["file"]}"><strong>{c["name"]}</strong></a><br><span class="small muted">{", ".join(acf(it, "model") for it in ms)}</span>')
         rows.append(f'<tr><td><strong>{lab}</strong></td><td>{"<hr class=\"cell-hr\">".join(cells)}</td></tr>')
-    # full fleet listing: the home page machine finder lands here with ?m_type=<machine_type>&m_height=<min-max>
-    fleet = listing_ctx("rental", sorted(RENTAL_ITEMS, key=lambda it: acf(it, "working_height")), [
-        ("Machine type", "m_type", [(c["slug"], c["name"]) for c in CATS.values()]),
-        ("Working height", "m_height", band_options(bands)),
-        ("Brand", "m_brand", [(b, BRAND_NAMES[b]) for b in sorted({tax(it, "machine_brand") for it in RENTAL_ITEMS})]),
-    ], RENTAL_SORTS)
     faq = [
         ("What access equipment can I rent from Cherry Pickers Equipment?", f"We rent {N_RENTAL} models across five types: electric scissor lifts, rough terrain scissor lifts, electric boom lifts, articulated boom lifts and telescopic boom lifts, from 7.8 m to 43 m working height. Spider lifts are available on request."),
         ("What is a spider lift and when do I need one?", "A spider lift is a compact boom on rubber tracks with outriggers. It fits through standard doorways, is light on delicate floors and levels itself on slopes, stairs or soft ground. Ask us when access is tight or the floor cannot take a standard boom."),
@@ -666,18 +662,7 @@ def page_rental_landing():
     <div class="tiles">
       {"".join(tiles)}
     </div>
-  </div>
-</section>
-
-<!-- 2b. ALL RENTAL MACHINES: filterable list of the whole fleet (target of the home page machine finder) -->
-<section class="section section--alt" id="all-machines" style="padding-top:40px">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow">Full fleet</span>
-      <h2>All Rental Machines</h2>
-      <p>Filter all {N_RENTAL} models by machine type, working height and brand.</p>
-    </div>
-    {listing(fleet)}
+    <p class="mt-24"><a class="link-arrow" href="rental-all.html">Browse all {N_RENTAL} rental machines with filters →</a></p>
   </div>
 </section>
 
@@ -795,6 +780,45 @@ def page_rental_landing():
 </section>
 
 {{{{cta:Need a Machine for Your Project?|Tell us the working height, the job and the site location. We'll suggest the right machine and send a quote.}}}}
+'''
+
+
+# ================================================================== ALL RENTAL MACHINES (/rental/all-machines/)
+# The home page machine finder lands here with ?m_type=<machine_type>&m_height=<min-max>
+RENTAL_BANDS = [(0, 10, "Up to 10 m"), (10, 16, "10 – 16 m"), (16, 22, "16 – 22 m"), (22, 99, "22 m and above")]
+
+
+def page_rental_all():
+    fleet = listing_ctx("rental", sorted(RENTAL_ITEMS, key=lambda it: acf(it, "working_height")), [
+        ("Machine type", "m_type", [(c["slug"], c["name"]) for c in CATS.values()]),
+        ("Working height", "m_height", band_options(RENTAL_BANDS)),
+        ("Brand", "m_brand", [(b, BRAND_NAMES[b]) for b in sorted({tax(it, "machine_brand") for it in RENTAL_ITEMS})]),
+    ], RENTAL_SORTS)
+    switch = "".join(f'<a class="chip" href="{o["file"]}">{o["name"]} ({o["n"]})</a>' for o in CATS.values())
+    return f'''<!-- 1. COMPACT HEADER: H1 + intro + category chips (listing comes first on this page) -->
+<section class="r-hero r-hero--compact">
+  {hero_img("cat-articulated", "Boom lifts and scissor lifts for rent in Dubai")}
+  <div class="wrap r-hero-inner">
+    <div class="listing-hero-grid">
+      <div>
+        <h1>All Rental Machines</h1>
+        <p class="lead">Our full rental fleet: {N_RENTAL} scissor lift and boom lift models from 7.8 m to 43 m working height. Filter by machine type, working height and brand.</p>
+      </div>
+      <div class="listing-hero-cta">
+        <a class="btn btn--red btn--block" href="contact.html#enquiry">Get a Quote</a>
+        <a class="btn btn--wa btn--block" href="{{{{WA_LINK}}}}">{icon("wa")} WhatsApp</a>
+      </div>
+    </div>
+    <nav class="cat-chips" aria-label="Rental categories">{switch}</nav>
+  </div>
+</section>
+
+<!-- 2. FULL FLEET LISTING (filter URLs = noindex in WordPress) -->
+<section class="section" id="all-machines" style="padding-top:32px">
+  <div class="wrap">
+    {listing(fleet)}
+  </div>
+</section>
 '''
 
 
@@ -1534,7 +1558,7 @@ def home_scard(key):
 HOME_RANGE = {"es": "7.8 – 15.7 m", "rt": "15.1 – 18.2 m", "eb": "13.5 – 20.4 m", "ab": "15.7 – 43.2 m", "tb": "15.7 – 28.2 m"}
 HOME_NAV = [
     ("Rental", "rental.html", [(c["name"], c["file"], HOME_RANGE[k] + {"es": " · indoor", "rt": " · outdoor"}.get(k, ""))
-                               for k, c in CATS.items()] + [("All rental machines →", "rental.html", "")]),
+                               for k, c in CATS.items()] + [("All rental machines →", "rental-all.html", "")]),
     ("Sales", "sales.html", [("Used Equipment", "sales-used.html", ""),
                              ("New Equipment", "sales-new.html", ""), ("Sold Equipment", "sales-sold.html", "")]),
     ("Services", "services.html", [("AMC", "services-amc.html", "Annual maintenance contracts"),
@@ -1824,6 +1848,9 @@ PAGES = [
      "about", [("About", "about.html"), ("Our Story", "")], "about-our-story"),
     ("rental/index.html", "Scissor Lift & Boom Lift Rental in Dubai and the UAE | Cherry Pickers Equipment",
      f"Rent from {N_RENTAL} scissor lift and boom lift models, 7.8 m to 43 m working height. Daily to long-term hire across all 7 emirates, operators on request.", "rental", [("Rental", "")], page_rental_landing),
+    ("rental/all-machines/index.html", f"All Rental Machines – {N_RENTAL} Scissor Lifts & Boom Lifts | Cherry Pickers Equipment",
+     f"Browse all {N_RENTAL} scissor lift and boom lift models for rent in Dubai and the UAE. Filter by machine type, working height and brand.",
+     "rental", [("Rental", "rental.html"), ("All Machines", "")], page_rental_all),
 ]
 for c in CATS.values():
     PAGES.append((f"rental/{c['slug']}/index.html",
@@ -1888,6 +1915,7 @@ WA_RENT = "\nWorking height:\nSite location:\nDates:"
 WA_DEFAULT = f"{WA_HI} I'd like more information about your access equipment."
 WA_MSG = {
     "rental/index.html": f"{WA_HI} I'd like a rental quote.\nMachine type:" + WA_RENT,
+    "rental/all-machines/index.html": f"{WA_HI} I'd like a rental quote.\nMachine type:" + WA_RENT,
     "rental/electric-scissor-lifts/genie-gs-3246/index.html": f"{WA_HI} I'd like a quote to rent the Genie GS-3246 electric scissor lift.\nSite location:\nDates:",
     "sales/index.html": f"{WA_HI} I'm interested in buying a used machine.\nModel:\nWorking height:\nCountry:",
     "sales/new/index.html": f"{WA_HI} I'm interested in buying a new machine.\nModel:\nCountry:",
