@@ -11,6 +11,7 @@ Partials in ./pages use flat names (e.g. href="contact.html"); rewrite_links() m
 """
 import json
 import re
+from html import escape as html_escape
 from urllib.parse import quote
 import shutil
 from collections import Counter, OrderedDict
@@ -54,41 +55,34 @@ LINKS = {
     "terms-and-conditions.html": "terms-and-conditions/",
 }
 
-# ------------------------------------------------------------------ rental fleet (live Equipment Hire page, duplicates merged)
-# key, model, brand, category, working h, platform h, outreach, capacity kg, weight kg, power, image, status
-R = [
-    ("gs1930", "Genie GS-1930", "Genie", "es", 7.79, 5.58, None, 227, 1505, "Electric", "r-gs1930", "ok"),
-    ("gs1932", "Genie GS-1932", "Genie", "es", 7.81, 5.85, None, 227, 1329, "Electric", "r-gs1932", "ok"),
-    ("gs2646", "Genie GS-2646", "Genie", "es", 9.9, 7.96, None, 454, 1956, "Electric", "r-gs2646", "busy"),
-    ("gs3246", "Genie GS-3246", "Genie", "es", 11.75, 9.78, None, 318, 2812, "Electric", "r-gs3246", "ok"),
-    ("3246es", "JLG 3246ES", "JLG", "es", 11.68, 9.68, None, 320, 2905, "Electric", "r-3246es", "ok"),
-    ("d1412", "Dingli 1412HD", "Dingli", "es", 13.8, 11.8, None, 320, 3380, "Electric", "r-dingli1412", "ok"),
-    ("m4069", "JLG M4069LE", "JLG", "es", 14.19, 12.19, None, 362, 4926, "Electric", "r-m4069le", "ok"),
-    ("d1612", "Dingli 1612HD", "Dingli", "es", 15.7, 13.7, None, 250, 3360, "Electric", "r-dingli1612", "ok"),
-    ("gs4390", "Genie GS-4390 RT", "Genie", "rt", 15.11, 13.11, None, 680, 5937, "Diesel", "r-gs4390rt", "ok"),
-    ("gs5390", "Genie GS-5390 RT", "Genie", "rt", 18.15, 16.15, None, 680, 7515, "Diesel", "r-gs5390", "ok"),
-    ("ab38e", "Snorkel AB38E", "Snorkel", "eb", 13.5, None, 6.1, 215, 3880, "Electric", "r-ab38e", "ok"),
-    ("e450aj", "JLG E450AJ", "JLG", "eb", 15.7, None, 7.24, 227, 6532, "Electric", "r-e450aj", "ok"),
-    ("600jp", "JLG 600JP", "JLG", "eb", 20.39, None, 13.54, 230, 7815, "Electric", "r-600jp", "ok"),
-    ("450aj", "JLG 450AJ", "JLG", "ab", 15.72, None, 7.62, 250, 6418, "Diesel", "r-450aj", "ok"),
-    ("z4525", "Genie Z-45/25", "Genie", "ab", 15.9, None, 7.65, 227, 7400, "Diesel", "r-z4525", "ok"),
-    ("z4525ic", "Genie Z-45/25 IC", "Genie", "ab", 15.9, None, 7.65, 227, 7598, "Diesel", "r-z4525ic", "ok"),
-    ("z4525j", "Genie Z-45/25J", "Genie", "ab", 15.94, None, 7.65, 227, 6515, "Diesel", "r-z4525j", "ok"),
-    ("510aj", "JLG 510AJ", "JLG", "ab", 17.81, None, 9.48, 230, 7650, "Diesel", "r-510aj", "ok"),
-    ("z6034", "Genie Z-60/34", "Genie", "ab", 20.39, None, 11.05, 227, 11200, "Diesel", "r-z6034", "ok"),
-    ("600aj", "JLG 600AJ", "JLG", "ab", 20.47, None, 12.10, 227, 10455, "Diesel", "r-600aj", "busy"),
-    ("z6240", "Genie Z-62/40", "Genie", "ab", 20.87, None, 12.42, 227, 10063, "Diesel", "r-z6240", "ok"),
-    ("800aj", "JLG 800AJ", "JLG", "ab", 26.32, None, 15.8, 227, 15757, "Diesel", "r-800aj", "ok"),
-    ("z135", "Genie Z-135/70", "Genie", "ab", 43.15, None, 21.25, 272, 30000, "Diesel", "r-z135", "ok"),
-    ("s45", "Genie S-45", "Genie", "tb", 15.7, None, 11.02, 227, 6926, "Diesel", "r-s45", "ok"),
-    ("460sj", "JLG 460SJ", "JLG", "tb", 16.0, None, 12.34, 272, 8000, "Diesel", "r-460sj", "ok"),
-    ("s65", "Genie S-65", "Genie", "tb", 21.8, None, 17.12, 227, 10531, "Diesel", "r-s65", "ok"),
-    ("660sj", "JLG 660SJ", "JLG", "tb", 22.12, None, 17.4, 340, 12528, "Diesel", "r-660sj", "ok"),
-    ("s80x", "Genie S-80X", "Genie", "tb", 26.21, None, 21.8, 454, 16329, "Diesel", "r-s80x", "ok"),
-    ("s85", "Genie S-85", "Genie", "tb", 27.9, None, 23.32, 227, 18126, "Diesel", "r-s85", "ok"),
-    ("860sj", "JLG 860SJ", "JLG", "tb", 28.21, None, 22.86, 340, 17200, "Diesel", "r-860sj", "ok"),
-]
-RENTAL = {r[0]: r for r in R}
+# ------------------------------------------------------------------ machine data (single source: data/machines.json)
+# Shaped like WordPress posts of a 'machine' post type: taxonomies (machine_type, machine_brand, listing_status)
+# + ACF fields (model, year, working_height, ...). See WORDPRESS-MAP.md. Nothing else in this file holds machine data.
+MACHINES = json.loads((SRC / "data" / "machines.json").read_text(encoding="utf-8"))["machines"]
+
+
+def tax(it, key):
+    return it["taxonomies"][key]
+
+
+def acf(it, key):
+    """ACF field value (None when not recorded)."""
+    return it["acf"].get(key)
+
+
+def by_status(status):
+    return [it for it in MACHINES if tax(it, "listing_status") == status]
+
+
+RENTAL_ITEMS = by_status("rental")
+USED = by_status("used")
+NEW = by_status("new")      # new equipment for sale; none yet -> /sales/new/ shows an enquiry panel and is noindexed
+SOLD = by_status("sold")
+N_SOLD = len(SOLD)
+# lookup for {{card:status:slug}} tokens in the hand-written partials
+BY_KEY = {f"{tax(it, 'listing_status')}:{it['slug']}": it for it in MACHINES}
+# taxonomy term names (WordPress: the machine_brand term name)
+BRAND_NAMES = {"jlg": "JLG", "genie": "Genie", "dingli": "Dingli", "snorkel": "Snorkel"}
 CONTAIN = {"r-gs5390", "r-z4525j", "r-z4525ic", "r-800aj", "r-gs1932", "r-510aj", "r-s80x", "r-z6034"}
 
 # ------------------------------------------------------------------ rental categories
@@ -176,69 +170,33 @@ CATS["tb"] = dict(
          ("Telescopic or articulated – which do I need?", "Telescopic for the longest straight reach; articulated when you need to go up and over obstacles.")])
 
 for k, c in CATS.items():
-    ms = [r for r in R if r[3] == k]
+    ms = [it for it in RENTAL_ITEMS if tax(it, "machine_type") == c["slug"]]
+    whs = [acf(it, "working_height") for it in ms]
     c["key"] = k
     c["models"] = ms
     c["n"] = len(ms)
-    c["lo"] = f"{min(r[4] for r in ms):g} m"
-    c["hi"] = f"{max(r[4] for r in ms):g} m"
-    c["range"] = f"{min(r[4] for r in ms):.1f} – {max(r[4] for r in ms):.1f} m"
+    c["lo"] = f"{min(whs):g} m"
+    c["hi"] = f"{max(whs):g} m"
+    c["range"] = f"{min(whs):.1f} – {max(whs):.1f} m"
     c["file"] = f"rental-{c['slug']}.html"
+    c.setdefault("search", True)   # listing search on this category page (False = no search markup)
     LINKS[c["file"]] = f"rental/{c['slug']}/"
-N_RENTAL = len(R)
+N_RENTAL = len(RENTAL_ITEMS)
 
-# ------------------------------------------------------------------ sales stock (page 1 of live "Available for Sale", duplicate serial merged)
-# id, year, model, brand, type, origin, working height, image or None, note
-SALE = [
-    ("a1", 2011, "JLG 860SJ", "JLG", "T", "Australia", 28.2, "s-860sj", ""),
-    ("a2", 2008, "JLG 660SJ", "JLG", "T", "Spain", 22.1, "s-660sj-2008", ""),
-    ("a3", 2007, "JLG 660SJ", "JLG", "T", "Spain", 22.1, None, "Listing photo shows a different machine"),
-    ("a4", 2018, "JLG E450AJ", "JLG", "A", "Singapore", 15.7, "s-e450aj-2", "2nd unit"),
-    ("a5", 2011, "JLG M450AJ", "JLG", "A", "Poland", 15.7, "s-m450aj", ""),
-    ("a6", 2018, "JLG E450AJ", "JLG", "A", "Singapore", 15.7, "s-e450aj", "1st unit"),
-    ("a7", 2006, "JLG 1350SJP", "JLG", "T", "Denmark", 43.1, None, "Listing photo needs checking"),
-    ("a8", 2009, "JLG 1350SJP", "JLG", "T", "Hong Kong", 43.1, "s-1350sjp", "Listed twice (same serial)"),
-    ("a10", 2004, "JLG 860SJ", "JLG", "T", "Netherlands", 28.2, "s-860sj-2004", ""),
-    ("a11", 2007, "JLG 860SJ", "JLG", "T", "Netherlands", 28.2, None, "Listing photo shows a Genie boom"),
-    ("a12", 2006, "Genie S-65", "Genie", "T", "Poland", 21.8, None, "Listing photo shows a JLG data plate"),
-    ("a13", 2010, "JLG 600AJ", "JLG", "A", "Australia", 20.5, "s-600aj-1", ""),
-    ("a14", 2008, "JLG 600AJ", "JLG", "A", "Australia", 20.5, None, "Listing photo shows a telescopic boom"),
-    ("a15", 2008, "JLG 1200SJP", "JLG", "T", "Denmark", 38.6, "s-1200sjp", ""),
-    ("a16", 2006, "JLG 1200SJP", "JLG", "T", "Denmark", 38.6, None, "Listing photo shows only a platform"),
-    ("a17", 2007, "JLG 860SJ", "JLG", "T", "Denmark", 28.2, None, "No photo on listing"),
-]
-# New equipment for sale (same tuple format as SALE). Empty = /sales/new/ shows an enquiry panel and is noindexed.
-NEW = []
-SALEMAP = {s[0]: s for s in SALE + NEW}
-TYPES = {"T": ("telescopic", "Telescopic Boom Lift"), "A": ("articulated", "Articulated Boom Lift"),
-         "S": ("scissor", "Scissor Lift"), "R": ("scissor", "Scissor Lift"), "E": ("electric-boom", "Electric Boom Lift")}
-
-# ------------------------------------------------------------------ sold records
-SOLD = []
-for line in (SRC / "data" / "sold.txt").read_text(encoding="utf-8").splitlines():
-    if not line.strip() or line.startswith("#"):
-        continue
-    m, y, o, t, to, d = line.split("|")
-    SOLD.append(dict(id=str(len(SOLD) + 1), model=m, year=int(y), origin=o, t=t, to=to or "", date=d or ""))
-N_SOLD = len(SOLD)
+# machine_type term -> (sales group, label shown on sales/sold cards). Scissor types share one sales label.
+TYPES = {"telescopic-boom-lifts": ("telescopic", "Telescopic Boom Lift"), "articulated-boom-lifts": ("articulated", "Articulated Boom Lift"),
+         "electric-scissor-lifts": ("scissor", "Scissor Lift"), "rough-terrain-scissor-lifts": ("scissor", "Scissor Lift"),
+         "electric-boom-lifts": ("electric-boom", "Electric Boom Lift")}
 MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
 
-# Sold cards/pages show a photo of the same MODEL from our rental fleet or sales stock (labelled "Model photo"),
-# because the sold records have no photos of the actual unit. Models not listed here get a grey placeholder.
-SOLD_IMG = {
-    "JLG 660SJ": "r-660sj", "JLG 860SJ": "r-860sj", "Genie S-65": "r-s65", "JLG 600AJ": "r-600aj",
-    "JLG 1200SJP": "s-1200sjp", "JLG 1350SJP": "s-1350sjp", "JLG 800AJ": "r-800aj", "JLG E450AJ": "r-e450aj",
-    "Genie S-85": "r-s85", "JLG 510AJ": "r-510aj", "JLG M450AJ": "s-m450aj", "Genie GS-5390 RT": "r-gs5390",
-    "Genie Z-135/70": "r-z135", "JLG 460SJ": "r-460sj", "JLG 450AJ": "r-450aj",
-}
-SOLD_IMG = {k: v for k, v in SOLD_IMG.items() if (IMG / f"{v}-sm.webp").exists()}
-# Model specs we already hold: rental fleet (full specs) and sales stock (working height only)
-MODEL_RENT = {r[1]: r for r in R}
-MODEL_WH = {s[2]: s[6] for s in SALE}
-MODEL_WH.update({r[1]: r[4] for r in R})
+# Model specs we already hold: rental fleet (full specs) and used stock (working height only) – used on sold detail pages
+MODEL_RENT = {acf(it, "model"): it for it in RENTAL_ITEMS}
+MODEL_WH = {acf(it, "model"): acf(it, "working_height") for it in USED}
+MODEL_WH.update({acf(it, "model"): acf(it, "working_height") for it in RENTAL_ITEMS})
 
 
 def fmt_date(d):
+    """sold_date 'YYYY-MM' ('YYYY-00' = month unknown) -> 'Nov 2025' / '2025'."""
     if not d:
         return "—"
     y, mo = d.split("-")
@@ -257,29 +215,27 @@ def band(v, bands):
 
 
 # ------------------------------------------------------------------ per-machine detail pages (flat token -> folder URL)
-# rent-<key>.html -> rental/<category-slug>/<model-slug>/   e.g. rental/telescopic-boom-lifts/genie-s-65/
-# sale-<id>.html  -> sales/used/<year>-<model-slug>/        e.g. sales/used/2011-jlg-860sj/
-# The same year + model listed twice gets "-2" on the later one (WordPress does the same for duplicate slugs).
-for _r in R:
-    LINKS[f"rent-{_r[0]}.html"] = f"rental/{CATS[_r[3]]['slug']}/{slug(_r[1])}/"
-_seen = Counter()
-for _s in SALE:
-    _base = f"{_s[1]}-{slug(_s[2])}"
-    _seen[_base] += 1
-    LINKS[f"sale-{_s[0]}.html"] = f"sales/used/{_base}{'' if _seen[_base] == 1 else '-' + str(_seen[_base])}/"
-# sold-<n>.html -> sales/sold/<year>-<model-slug>/   e.g. sales/sold/2015-jlg-860sj/  (same "-2" rule for repeats)
-_seen = Counter()
-for _s in SOLD:
-    _base = f"{_s['year']}-{slug(_s['model'])}"
-    _seen[_base] += 1
-    LINKS[f"sold-{_s['id']}.html"] = f"sales/sold/{_base}{'' if _seen[_base] == 1 else '-' + str(_seen[_base])}/"
-# The mockup builds one sample sold detail page (like the one rental and one used-sale sample); WordPress renders the rest.
-SOLD_SAMPLE = next(s for s in SOLD if s["model"] == "JLG 860SJ" and s["year"] == 2015 and s["to"] and s["date"])
-SOLD_SAMPLE_PATH = LINKS[f"sold-{SOLD_SAMPLE['id']}.html"] + "index.html"
+# machine-<id>.html -> the machine's permalink (WordPress: get_permalink()):
+#   rental -> rental/<machine_type>/<slug>/     e.g. rental/telescopic-boom-lifts/genie-s-65/
+#   used   -> sales/used/<slug>/                e.g. sales/used/2011-jlg-860sj/
+#   sold   -> sales/sold/<slug>/                e.g. sales/sold/2015-jlg-860sj/
+def machine_path(it):
+    st = tax(it, "listing_status")
+    if st == "rental":
+        return f"rental/{tax(it, 'machine_type')}/{it['slug']}/"
+    return f"sales/{st}/{it['slug']}/"
 
-# Sales machine type letter -> rental category slug (so ?category= works the same on rental and sales listings)
-TYPE_CAT = {"T": "telescopic-boom-lifts", "A": "articulated-boom-lifts", "E": "electric-boom-lifts",
-            "S": "electric-scissor-lifts", "R": "rough-terrain-scissor-lifts"}
+
+def machine_href(it):
+    return f"machine-{it['id']}.html"
+
+
+for _it in MACHINES:
+    LINKS[machine_href(_it)] = machine_path(_it)
+# The mockup builds one sample sold detail page (like the one rental and one used-sale sample); WordPress renders the rest.
+SOLD_SAMPLE = next(it for it in SOLD if acf(it, "model") == "JLG 860SJ" and acf(it, "year") == 2015
+                   and acf(it, "sold_to") and acf(it, "sold_date"))
+SOLD_SAMPLE_PATH = machine_path(SOLD_SAMPLE) + "index.html"
 SLUG_CAT = {c["slug"]: c for c in CATS.values()}
 
 
@@ -314,134 +270,320 @@ def wa_url(msg):
     return f"{WA_LINK}?text={quote(msg, safe='')}"
 
 
-STATUS = {"ok": '<span class="badge badge--ok">Available</span>',
-          "busy": '<span class="badge badge--busy">On hire – ask for date</span>'}
+STATUS = {"available": '<span class="badge badge--ok">Available</span>',
+          "on-hire": '<span class="badge badge--busy">On hire – ask for date</span>'}
+WA_NUMBER = WA_LINK.rsplit("/", 1)[-1]
+PER_PAGE = 24
 
 
-# ------------------------------------------------------------------ cards
-def rental_card(key, facets=""):
-    k, m, brand, cat, wh, ph, out, cap, wt, pw, img, st = RENTAL[key]
-    c = CATS[cat]
-    fit = " contain" if img in CONTAIN else ""
-    mid = (f"<div><strong>{ph:g} m</strong>Platform ht.</div>" if ph else f"<div><strong>{out:g} m</strong>Outreach</div>")
-    return f'''<article class="machine-card" data-item data-facets="{facets}" data-s-height="{wh}" data-s-cap="{cap}">
-  <div class="card-top-badges">{STATUS[st]}</div>
-  {media(img + "-sm", f"{m} {c['one'].lower()} for rent in Dubai", "ratio-4-3" + fit)}
-  <div class="machine-card-body">
-    <div>
-      <h3><a href="rent-{k}.html">{m}</a></h3>
-      <div class="machine-type">{c['one']} · {pw}</div>
-    </div>
-    <div class="spec-mini">
-      <div><strong>{wh:g} m</strong>Working ht.</div>
-      {mid}
-      <div><strong>{cap} kg</strong>Capacity</div>
-    </div>
-    <div class="machine-actions">
-      <a class="btn btn--ghost btn--sm" href="rent-{k}.html" style="justify-content:center">Details</a>
-      <a class="btn btn--red btn--sm" href="contact.html#enquiry" style="justify-content:center">Get a Quote</a>
-    </div>
-  </div>
-</article>'''
+def esc(v):
+    return html_escape(str(v), quote=True)
 
 
-def sale_card(sid, facets=""):
-    i, y, m, brand, t, origin, wh, img, note = SALEMAP[sid]
-    tname = TYPES[t][1]
-    if img:
-        pic = media(img + "-sm", f"Used {y} {m} {tname.lower()} for sale", "ratio-4-3")
-    else:
-        pic = '<div class="ph ratio-4-3 ph--req" data-label="Photos on request"></div>'
-    href = f"sale-{i}.html" if f"sale-{i}.html" in LINKS else "sales-new.html"
-    return f'''<article class="machine-card" data-item data-facets="{facets}" data-s-year="{y}" data-s-height="{wh}">
-  {pic}
-  <div class="machine-card-body">
-    <div>
-      <h3><a href="{href}">{y} {m}</a></h3>
-      <div class="machine-type">{tname} · Origin: {origin}</div>
-    </div>
-    <div class="spec-mini">
-      <div><strong>{y}</strong>Year</div>
-      <div><strong>{wh:g} m</strong>Working ht.</div>
-      <div><strong>{brand}</strong>Brand</div>
-    </div>
-    <div class="price">Contact for price <small>UAE &amp; export enquiries</small></div>
-    <div class="machine-actions">
-      <a class="btn btn--ghost btn--sm" href="{href}" style="justify-content:center">Details</a>
-      <a class="btn btn--red btn--sm" href="contact.html#enquiry" style="justify-content:center">Enquire</a>
-    </div>
-  </div>
-</article>'''
+def item_data_attrs(it):
+    """data-* named after the taxonomy / ACF keys. The mockup's listing.js filters, sorts and searches on these;
+    in WordPress the server does that, so these are optional there."""
+    pairs = [("machine-type", tax(it, "machine_type")), ("machine-brand", tax(it, "machine_brand"))]
+    for k in ("model", "year", "working_height", "capacity", "outreach", "origin", "sold_to", "sold_date", "availability"):
+        v = acf(it, k)
+        if v is not None:
+            pairs.append((k.replace("_", "-"), f"{v:g}" if isinstance(v, float) else v))
+    return " ".join(f'data-{k}="{esc(v)}"' for k, v in pairs)
 
 
-def sold_pic(s, cls="ratio-4-3", eager=False, label="Model photo"):
+def sold_pic(it, cls="ratio-4-3", eager=False, label="Model photo"):
     """Model photo for a sold record (greyed by .is-sold on cards), or a placeholder when we have no photo of the model."""
-    img = SOLD_IMG.get(s["model"])
-    tname = TYPES[s["t"]][1].lower()
+    img = acf(it, "image")
+    tname = TYPES[tax(it, "machine_type")][1].lower()
     if not img:
-        ph = " ph--scissor" if s["t"] in ("S", "R") else ""
+        ph = " ph--scissor" if TYPES[tax(it, "machine_type")][0] == "scissor" else ""
         return f'<div class="ph {cls} ph--req{ph}" data-label="No photo of this model yet"></div>'
     name = img if eager and (IMG / f"{img}.webp").exists() else img + "-sm"
     fit = " contain" if img in CONTAIN else ""
-    return media(name, f"{s['model']} {tname} – model photo, sold machine", cls + fit, eager, label)
+    return media(name, f"{acf(it, 'model')} {tname} – model photo, sold machine", cls + fit, eager, label)
 
 
-def sold_card(s, facets=""):
-    """Sold record card – same structure as the used-sale card, with a Sold badge and greyed photo."""
-    tname = TYPES[s["t"]][1]
-    href = f"sold-{s['id']}.html"
-    dkey = s["date"].replace("-", "") if s["date"] else "0"
-    return f'''<article class="machine-card is-sold" data-item data-facets="{facets}" data-s-date="{dkey}" data-s-year="{s["year"]}">
-  <div class="card-top-badges"><span class="badge badge--sold">Sold</span></div>
-  {sold_pic(s)}
-  <div class="machine-card-body">
+# ------------------------------------------------------------------ template-parts/machine-card.php
+# get_template_part('template-parts/machine-card', null, ['variant' => 'rental'|'used'|'sold'])
+def machine_card(it, variant=None, hidden=False):
+    variant = variant or tax(it, "listing_status")
+    href = machine_href(it)
+    m = acf(it, "model")
+    actions = '<div class="machine-actions cpe-card__actions">{}</div>'
+    btn = '<a class="btn {} btn--sm cpe-card__action" href="{}">{}</a>'
+    if variant == "rental":
+        c = SLUG_CAT[tax(it, "machine_type")]
+        img, ph, out = acf(it, "image"), acf(it, "platform_height"), acf(it, "outreach")
+        fit = " contain" if img in CONTAIN else ""
+        top = f'<div class="card-top-badges">{STATUS[acf(it, "availability")]}</div>\n  '
+        pic = media(img + "-sm", f"{m} {c['one'].lower()} for rent in Dubai", "ratio-4-3" + fit)
+        title, type_line = m, f"{c['one']} · {acf(it, 'power')}"
+        mid = f"<div><strong>{ph:g} m</strong>Platform ht.</div>" if ph else f"<div><strong>{out:g} m</strong>Outreach</div>"
+        specs = (f"<div><strong>{acf(it, 'working_height'):g} m</strong>Working ht.</div>\n      {mid}\n"
+                 f"      <div><strong>{acf(it, 'capacity')} kg</strong>Capacity</div>")
+        price = ""
+        acts = btn.format("btn--ghost", href, "Details") + "\n      " + btn.format("btn--red", "contact.html#enquiry", "Get a Quote")
+    else:
+        y, origin = acf(it, "year"), acf(it, "origin")
+        tname = TYPES[tax(it, "machine_type")][1]
+        title, type_line = f"{y} {m}", f"{tname} · Origin: {origin}"
+        if variant == "sold":
+            top = '<div class="card-top-badges"><span class="badge badge--sold">Sold</span></div>\n  '
+            pic = sold_pic(it)
+            specs = (f"<div><strong>{y}</strong>Year</div>\n      <div><strong>{acf(it, 'sold_to') or '—'}</strong>Sold to</div>\n"
+                     f"      <div><strong>{fmt_date(acf(it, 'sold_date'))}</strong>Sold</div>")
+            price = ""
+            acts = btn.format("btn--ghost", href, "Details") + "\n      " + btn.format("btn--red", "contact.html#enquiry", "Find Me One")
+        else:
+            img = acf(it, "image")
+            top = ""
+            pic = (media(img + "-sm", f"Used {y} {m} {tname.lower()} for sale", "ratio-4-3") if img
+                   else '<div class="ph ratio-4-3 ph--req" data-label="Photos on request"></div>')
+            specs = (f"<div><strong>{y}</strong>Year</div>\n      <div><strong>{acf(it, 'working_height'):g} m</strong>Working ht.</div>\n"
+                     f"      <div><strong>{BRAND_NAMES[tax(it, 'machine_brand')]}</strong>Brand</div>")
+            price = '\n    <div class="price">Contact for price <small>UAE &amp; export enquiries</small></div>'
+            acts = btn.format("btn--ghost", href, "Details") + "\n      " + btn.format("btn--red", "contact.html#enquiry", "Enquire")
+    sold_cls = " is-sold" if variant == "sold" else ""
+    return f'''<article class="machine-card{sold_cls} cpe-card cpe-card--{variant}" data-cpe-item {item_data_attrs(it)}{" hidden" if hidden else ""}>
+  {top}{pic}
+  <div class="machine-card-body cpe-card__body">
     <div>
-      <h3><a href="{href}">{s["year"]} {s["model"]}</a></h3>
-      <div class="machine-type">{tname} · Origin: {s["origin"]}</div>
+      <h3 class="cpe-card__title"><a href="{href}">{title}</a></h3>
+      <div class="machine-type cpe-card__type">{type_line}</div>
     </div>
-    <div class="spec-mini">
-      <div><strong>{s["year"]}</strong>Year</div>
-      <div><strong>{s["to"] or "—"}</strong>Sold to</div>
-      <div><strong>{fmt_date(s["date"])}</strong>Sold</div>
-    </div>
-    <div class="machine-actions">
-      <a class="btn btn--ghost btn--sm" href="{href}" style="justify-content:center">Details</a>
-      <a class="btn btn--red btn--sm" href="contact.html#enquiry" style="justify-content:center">Find Me One</a>
-    </div>
+    <div class="spec-mini cpe-card__specs">
+      {specs}
+    </div>{price}
+    {actions.format(chr(10) + "      " + acts + chr(10) + "    ")}
   </div>
 </article>'''
 
 
-# ------------------------------------------------------------------ filter sidebar (counts computed from data)
-def filter_group(title, key, options):
-    """options: list of (value, label, count)"""
-    rows = "".join(
-        f'<label data-label="{lab}"><input type="checkbox" name="{key}" value="{v}"> {lab} <span class="count">{n}</span></label>'
-        for v, lab, n in options)
-    return f'<div class="filter-group"><h3>{title}</h3>{rows}</div>'
+# ------------------------------------------------------------------ listing: filters, params, sorting
+# URL param -> (field, kind). Mirrors FIELDS in assets/js/listing.js and the table in WORDPRESS-MAP.md.
+#   tax   = taxonomy term slug        range = numeric 'min-max' (min inclusive, max exclusive, open ends empty)
+#   slug  = slug of an ACF text value  year  = first 4 characters of a 'YYYY-MM' date
+#   Empty text / date fields match the value 'not-recorded'.
+FIELDS = {
+    "m_type": ("machine_type", "tax"), "m_brand": ("machine_brand", "tax"),
+    "m_year": ("year", "range"), "m_height": ("working_height", "range"),
+    "m_capacity": ("capacity", "range"), "m_outreach": ("outreach", "range"),
+    "m_origin": ("origin", "slug"), "m_sold_to": ("sold_to", "slug"),
+    "m_sold_year": ("sold_date", "year"), "m_availability": ("availability", "slug"),
+}
+OPEN_TOP = (99, 2100, 9999)   # band upper bounds that mean "and above"
 
 
-def sidebar(groups, total, noun):
-    return f'''<aside class="filters" aria-label="Filter {noun}">
-      <div class="filters-head"><h2>Filter</h2><div class="filters-head-actions"><a href="#" data-clear>Clear all</a><button type="button" class="filters-x" data-filter-dismiss aria-label="Close filters">&times;</button></div></div>
-      {"".join(groups)}
-      <div class="filter-close"><button class="btn btn--red btn--block" data-filter-close>Show {total} {noun}</button></div>
-    </aside>'''
+def rng(lo, hi):
+    """Band (lo, hi) -> range param value: (0, 20) -> '-20', (20, 30) -> '20-30', (30, 99) -> '30-'."""
+    return f"{'' if lo <= 0 else f'{lo:g}'}-{'' if hi in OPEN_TOP else f'{hi:g}'}"
 
 
-def listing_bar(total, noun, sorts):
-    opts = "".join(f'<option value="{v}">{l}</option>' for v, l in sorts)
-    return f'''<div class="listing-bar">
-        <span class="result-count">Showing <strong><span data-result-count>{total}</span> {noun}</strong></span>
-        <div class="listing-bar-actions">
-          <button class="btn btn--ghost btn--sm filter-open" data-filter-open>{icon("filter")} Filter</button>
-          <label class="sort-group"><span class="sort-label">Sort by:</span><select class="select" data-sort>{opts}</select></label>
+def band_options(bands):
+    return [(rng(lo, hi), label) for lo, hi, label in bands]
+
+
+def facet_matches(it, param, value):
+    key, kind = FIELDS[param]
+    if kind == "tax":
+        return tax(it, key) == value
+    v = acf(it, key)
+    if kind == "range":
+        a, b = value.split("-")
+        return v is not None and (a == "" or v >= float(a)) and (b == "" or v < float(b))
+    if kind == "year":
+        return (v[:4] if v else "not-recorded") == value
+    return (slug(str(v)) if v else "not-recorded") == value
+
+
+def sort_items(items, sort):
+    """m_sort 'field-dir' -> items sorted on that ACF field (stable; mirrors sortItems() in listing.js)."""
+    field, direction = sort.rsplit("-", 1)
+
+    def key(it):
+        v = acf(it, field)
+        return 0 if v is None else float(str(v).replace("-", ""))
+    return sorted(items, key=key, reverse=direction == "desc")
+
+
+def listing_ctx(page_type, items, groups, sorts, nouns=("machine", "machines"), search=None, tries=(), note="",
+                label="machines"):
+    """ctx shared by all listing template parts (WordPress: the $args passed to each get_template_part()).
+    groups: [(title, param, [(value, label), ...])] – counts are computed here, options with no items are dropped."""
+    fgroups = []
+    for title, param, options in groups:
+        opts = [(v, lab, sum(facet_matches(it, param, v) for it in items)) for v, lab in options]
+        fgroups.append((title, param, [o for o in opts if o[2]]))
+    return dict(page_type=page_type, items=sort_items(items, sorts[0][0]), groups=fgroups, sorts=sorts,
+                total=len(items), per_page=PER_PAGE, paged=1, nouns=nouns, search=search, tries=tries, note=note,
+                label=label)
+
+
+def count_label(n, nouns):
+    return f"{n} {nouns[0] if n == 1 else nouns[1]}"
+
+
+def results_heading(total, paged, per_page, nouns):
+    """'Showing 25–48 of 212 records' (mirrors headingText() in listing.js)."""
+    if total <= per_page:
+        return f"Showing {count_label(total, nouns)}"
+    a = (paged - 1) * per_page + 1
+    return f"Showing {a}–{min(total, paged * per_page)} of {count_label(total, nouns)}"
+
+
+RENTAL_SORTS = [("working_height-asc", "Working height (low to high)"), ("working_height-desc", "Working height (high to low)"),
+                ("capacity-desc", "Capacity (highest first)")]
+
+
+# ------------------------------------------------------------------ template-parts/listing-filters.php
+def listing_filters(ctx):
+    groups = "".join(
+        f'<div class="filter-group cpe-listing-filters__group" role="group" aria-labelledby="cpe-g-{param}">'
+        f'<h3 id="cpe-g-{param}">{title}</h3>'
+        + "".join(f'<label data-label="{lab}"><input type="checkbox" name="{param}" value="{v}"> {lab} <span class="count">{n}</span></label>'
+                  for v, lab, n in opts)
+        + "</div>"
+        for title, param, opts in ctx["groups"])
+    return f'''<form id="cpe-filters" class="filters cpe-listing-filters" method="get" aria-label="Filter {ctx["label"]}" data-cpe-filters>
+      <div class="filters-head"><h2>Filter</h2><div class="filters-head-actions"><a href="?" data-cpe-clear-all>Clear all</a><button type="button" class="filters-x" data-cpe-filter-close aria-label="Close filters">&times;</button></div></div>
+      {groups}
+      <div class="filter-close cpe-listing-filters__apply"><button type="submit" class="btn btn--red btn--block" data-cpe-filter-apply>Show {count_label(ctx["total"], ctx["nouns"])}</button></div>
+    </form>'''
+
+
+# ------------------------------------------------------------------ template-parts/listing-toolbar.php
+def listing_toolbar(ctx):
+    opts = "".join(f'<option value="{v}">{l}</option>' for v, l in ctx["sorts"])
+    search = ""
+    if ctx["search"]:
+        search = f'''<div class="cpe-listing-search" role="search">
+          <label class="sr-only" for="cpe-q">Search machines</label>
+          <span class="cpe-listing-search__icon">{icon("search")}</span>
+          <input id="cpe-q" class="cpe-listing-search__input" type="search" name="q" form="cpe-filters" placeholder="{ctx["search"]}" aria-label="Search machines" autocomplete="off" spellcheck="false" data-cpe-search>
+          <button type="button" class="cpe-listing-search__clear" aria-label="Clear search" data-cpe-search-clear hidden>&times;</button>
+        </div>
+        '''
+    return f'''<div class="cpe-listing-toolbar">
+        {search}<div class="cpe-listing-toolbar__actions">
+          <button type="button" class="btn btn--ghost btn--sm filter-open" data-cpe-filter-open>{icon("filter")} Filter</button>
+          <label class="sort-group"><span class="sort-label">Sort by:</span><select class="select cpe-listing-toolbar__sort" name="m_sort" form="cpe-filters" data-cpe-sort>{opts}</select></label>
         </div>
       </div>
-      <div class="active-chips" data-active-chips></div>'''
+      <div class="active-chips cpe-listing-chips" data-cpe-chips></div>'''
 
 
-EMPTY = '<div class="empty-state" data-empty hidden><strong>No machines match these filters.</strong><br><a href="#" data-clear>Clear filters</a> or <a href="contact.html#enquiry">ask us to source one</a>.</div>'
+# ------------------------------------------------------------------ template-parts/listing-empty.php
+# The server renders the final title/links for the current search. The data-* templates are only for the mockup's JS.
+EMPTY_COPY = {
+    "used": dict(title="No machines match these filters", title_term="No {term} in stock right now",
+                 text="We source used JLG and Genie lifts on request. Tell us the spec and we'll find one for you.",
+                 wa="Hi Cherry Pickers, I'm looking for a used machine. Do you have one or can you source it?",
+                 wa_term="Hi Cherry Pickers, I'm looking for a used {term}. Do you have one or can you source it?", need="buy"),
+    "sold": dict(title="No records match these filters", title_term="No sold records for {term}",
+                 text="We source used JLG and Genie lifts on request. Tell us the spec and we'll find one for you.",
+                 wa="Hi Cherry Pickers, I'm looking for a machine like the ones you've sold. Can you source one?",
+                 wa_term="Hi Cherry Pickers, I'm looking for a {term} like the ones you've sold. Can you source one?", need="buy"),
+    "rental": dict(title="No machines match these filters", title_term="No {term} in our rental fleet right now",
+                   text="Tell us the working height and the job, and we'll suggest the right machine.",
+                   wa="Hi Cherry Pickers, I'd like a rental quote.",
+                   wa_term="Hi Cherry Pickers, I'd like to rent a {term}. Is one available?", need="rent"),
+}
+
+
+def listing_empty(ctx):
+    c = EMPTY_COPY[ctx["page_type"]]
+    tries = "".join(f'<button type="button" class="chip" data-cpe-try="{esc(t)}">{esc(t)}</button>' for t in ctx["tries"])
+    try_html = f'\n    <p class="cpe-listing-empty__try"><span>Try:</span> {tries}</p>' if tries and ctx["search"] else ""
+    return f'''<div class="empty-state cpe-listing-empty" data-cpe-empty hidden data-title="{esc(c["title"])}" data-title-term="{esc(c["title_term"])}" data-wa="{esc(c["wa"])}" data-wa-term="{esc(c["wa_term"])}">
+    <h3 class="cpe-listing-empty__title" data-cpe-empty-title>{c["title"]}</h3>
+    <p class="cpe-listing-empty__text">{c["text"]}</p>
+    <div class="cpe-listing-empty__actions">
+      <a class="btn btn--red" href="contact.html?need={c["need"]}#enquiry" data-cpe-empty-quote>Tell us your spec</a>
+      <a class="btn btn--wa" href="{wa_url(c["wa"])}" data-cpe-empty-wa>{icon("wa")} WhatsApp</a>
+      <button type="button" class="btn btn--ghost" data-cpe-clear-filters hidden>Clear filters</button>
+    </div>{try_html}
+  </div>'''
+
+
+# ------------------------------------------------------------------ template-parts/pagination.php
+def page_list(cur, last):
+    """1 … 4 5 6 … 9 (None = gap). A gap of exactly one page shows that page instead (mirrors pageList() in listing.js)."""
+    keep = sorted(p for p in {1, last, cur - 1, cur, cur + 1} if 1 <= p <= last)
+    out, prev = [], 0
+    for p in keep:
+        if p - prev == 2:
+            out.append(prev + 1)
+        elif p - prev > 2:
+            out.append(None)
+        out.append(p)
+        prev = p
+    return out
+
+
+def listing_pagination(ctx, query=""):
+    """Real links: ?<current params>&paged=N (page 1 drops paged). Nothing when everything fits on one page."""
+    total, per, cur = ctx["total"], ctx["per_page"], ctx["paged"]
+    last = -(-total // per)
+    if last <= 1:
+        return ""
+
+    def href(p):
+        q = "&amp;".join(x for x in (query, f"paged={p}" if p > 1 else "") if x)
+        return f"?{q}"
+    lab = '<span class="cpe-listing-pagination__label">{}</span>'
+    prev = (f'<a class="cpe-listing-pagination__prev" href="{href(cur - 1)}" rel="prev" data-cpe-page="{cur - 1}">‹ {lab.format("Previous")}</a>'
+            if cur > 1 else f'<span class="cpe-listing-pagination__prev is-disabled" aria-disabled="true">‹ {lab.format("Previous")}</span>')
+    nxt = (f'<a class="cpe-listing-pagination__next" href="{href(cur + 1)}" rel="next" data-cpe-page="{cur + 1}">{lab.format("Next")} ›</a>'
+           if cur < last else f'<span class="cpe-listing-pagination__next is-disabled" aria-disabled="true">{lab.format("Next")} ›</span>')
+    pages = "".join(
+        '<li><span class="cpe-listing-pagination__gap" aria-hidden="true">…</span></li>' if p is None else
+        (f'<li><span class="cpe-listing-pagination__page is-current" aria-current="page">{p}</span></li>' if p == cur else
+         f'<li><a class="cpe-listing-pagination__page" href="{href(p)}" data-cpe-page="{p}" aria-label="Page {p}">{p}</a></li>')
+        for p in page_list(cur, last))
+    return f'''<nav class="cpe-listing-pagination" aria-label="Pagination">
+      {prev}
+      <ul class="cpe-listing-pagination__pages">{pages}</ul>
+      <span class="cpe-listing-pagination__status">Page {cur} of {last}</span>
+      {nxt}
+    </nav>'''
+
+
+# ------------------------------------------------------------------ archive-machine.php: results region
+# WordPress swaps this whole element (#cpe-results) with the fetched response. Keep everything that depends on the
+# result set inside it: heading/count, cards, empty state, pagination.
+def listing_results(ctx):
+    per = ctx["per_page"]
+    cards = "".join(machine_card(it, ctx["page_type"], hidden=n >= per)
+                    for n, it in enumerate(ctx["items"]))
+    return f'''<div id="cpe-results" class="cpe-listing-results" data-total="{ctx["total"]}" data-paged="1">
+        <h2 class="cpe-listing-results__heading" tabindex="-1" data-cpe-heading>{results_heading(ctx["total"], 1, per, ctx["nouns"])}</h2>
+        <div class="grid grid-3 cpe-listing-results__grid" data-cpe-grid>
+          {"".join(cards)}
+        </div>
+        {listing_empty(ctx)}
+        <div class="cpe-listing-results__pager" data-cpe-pager>{listing_pagination(ctx)}</div>
+      </div>'''
+
+
+# Front-end config for the current page (WordPress: wp_localize_script('cpe-listing', 'CPE', [...])).
+# listing() sets it; build() prints it in <head> and adds listing.js. Reset by build() for every page.
+CPE_PAGE = None
+
+
+# ------------------------------------------------------------------ archive-machine.php: listing layout
+def listing(ctx):
+    global CPE_PAGE
+    CPE_PAGE = {"whatsapp": WA_NUMBER, "pageType": ctx["page_type"], "perPage": ctx["per_page"],
+                "nouns": list(ctx["nouns"]), "search": bool(ctx["search"])}
+    return f'''<div class="listing cpe-listing">
+      {listing_filters(ctx)}
+      <div class="cpe-listing-main">
+        {listing_toolbar(ctx)}
+        {listing_results(ctx)}
+        <p class="sr-only" aria-live="polite" data-cpe-announce></p>
+        {ctx["note"]}
+      </div>
+    </div>'''
 
 
 def faq_html(items):
@@ -481,22 +623,16 @@ def page_rental_landing():
     for lo, hi, lab in bands:
         cells = []
         for c in CATS.values():
-            ms = [r for r in c["models"] if lo <= r[4] < hi]
+            ms = [it for it in c["models"] if lo <= acf(it, "working_height") < hi]
             if ms:
-                cells.append(f'<a href="{c["file"]}"><strong>{c["name"]}</strong></a><br><span class="small muted">{", ".join(r[1] for r in ms)}</span>')
+                cells.append(f'<a href="{c["file"]}"><strong>{c["name"]}</strong></a><br><span class="small muted">{", ".join(acf(it, "model") for it in ms)}</span>')
         rows.append(f'<tr><td><strong>{lab}</strong></td><td>{"<hr class=\"cell-hr\">".join(cells)}</td></tr>')
-    # full fleet listing: the home page machine finder lands here with ?category=<slug>&height=<min-max>
-    fc, fh, fb = Counter(), Counter(), Counter()
-    cards = []
-    for r in sorted(R, key=lambda r: r[4]):
-        cv = CATS[r[3]]["slug"]; hv, _ = band(r[4], bands); bv = slug(r[2])
-        fc[cv] += 1; fh[hv] += 1; fb[bv] += 1
-        cards.append(rental_card(r[0], f"category={cv} height={hv} brand={bv}"))
-    fleet_groups = [
-        filter_group("Machine type", "category", [(c["slug"], c["name"], fc[c["slug"]]) for c in CATS.values()]),
-        filter_group("Working height", "height", [(slug(l), l, fh[slug(l)]) for _, _, l in bands if fh[slug(l)]]),
-        filter_group("Brand", "brand", [(b, "JLG" if b == "jlg" else b.title(), n) for b, n in sorted(fb.items())]),
-    ]
+    # full fleet listing: the home page machine finder lands here with ?m_type=<machine_type>&m_height=<min-max>
+    fleet = listing_ctx("rental", sorted(RENTAL_ITEMS, key=lambda it: acf(it, "working_height")), [
+        ("Machine type", "m_type", [(c["slug"], c["name"]) for c in CATS.values()]),
+        ("Working height", "m_height", band_options(bands)),
+        ("Brand", "m_brand", [(b, BRAND_NAMES[b]) for b in sorted({tax(it, "machine_brand") for it in RENTAL_ITEMS})]),
+    ], RENTAL_SORTS)
     faq = [
         ("What access equipment can I rent from Cherry Pickers Equipment?", f"We rent {N_RENTAL} models across five types: electric scissor lifts, rough terrain scissor lifts, electric boom lifts, articulated boom lifts and telescopic boom lifts, from 7.8 m to 43 m working height. Spider lifts are available on request."),
         ("What is a spider lift and when do I need one?", "A spider lift is a compact boom on rubber tracks with outriggers. It fits through standard doorways, is light on delicate floors and levels itself on slopes, stairs or soft ground. Ask us when access is tight or the floor cannot take a standard boom."),
@@ -541,17 +677,7 @@ def page_rental_landing():
       <h2>All Rental Machines</h2>
       <p>Filter all {N_RENTAL} models by machine type, working height and brand.</p>
     </div>
-    <div class="listing">
-      {sidebar(fleet_groups, N_RENTAL, "machines")}
-      <div>
-        {listing_bar(N_RENTAL, "machines", [("height-asc", "Working height (low to high)"), ("height-desc", "Working height (high to low)"), ("cap-desc", "Capacity (highest first)")])}
-        <div class="grid grid-3" data-listing data-page-size="9" data-noun="machines">
-          {"".join(cards)}
-        </div>
-        {EMPTY}
-        <div class="center mt-24"><button class="btn btn--ghost" data-more>Show more machines</button></div>
-      </div>
-    </div>
+    {listing(fleet)}
   </div>
 </section>
 
@@ -674,32 +800,28 @@ def page_rental_landing():
 
 # ================================================================== RENTAL CATEGORY LISTING
 def page_rental_category(c):
-    ms = c["models"]
-    hb = c["hb"]
+    ms = sorted(c["models"], key=lambda it: acf(it, "working_height"))
     skey, stitle, sbands = c["second"]
-    items = []
-    fh, fs, fb, fa = Counter(), Counter(), Counter(), Counter()
-    for r in sorted(ms, key=lambda r: r[4]):
-        hv, _ = band(r[4], hb)
-        sv, _ = band(r[7] if skey == "cap" else r[6], sbands)
-        bv = slug(r[2])
-        av = "available" if r[11] == "ok" else "on-hire"
-        fh[hv] += 1; fs[sv] += 1; fb[bv] += 1; fa[av] += 1
-        items.append(rental_card(r[0], f"height={hv} {skey}={sv} brand={bv} avail={av}"))
-    groups = [
-        filter_group("Working height", "height", [(slug(l), l, fh[slug(l)]) for _, _, l in hb if fh[slug(l)]]),
-        filter_group(stitle, skey, [(slug(l), l, fs[slug(l)]) for _, _, l in sbands if fs[slug(l)]]),
-        filter_group("Brand", "brand", [(b, b.title() if b != "jlg" else "JLG", n) for b, n in sorted(fb.items())]),
-        filter_group("Availability", "avail", [(v, l, fa[v]) for v, l in (("available", "Available now"), ("on-hire", "On hire")) if fa[v]]),
-    ]
+    brands = Counter(tax(it, "machine_brand") for it in ms)
+    # "Try:" chips: lowest and highest model (without the brand) + the most common brand
+    short = [acf(it, "model").split(" ", 1)[1] for it in (ms[0], ms[-1])]
+    tries = list(dict.fromkeys(short + [BRAND_NAMES[brands.most_common(1)[0][0]]]))
+    ctx = listing_ctx("rental", ms, [
+        ("Working height", "m_height", band_options(c["hb"])),
+        (stitle, {"cap": "m_capacity", "out": "m_outreach"}[skey], band_options(sbands)),
+        ("Brand", "m_brand", [(b, BRAND_NAMES[b]) for b in sorted(brands)]),
+        ("Availability", "m_availability", [("available", "Available now"), ("on-hire", "On hire")]),
+    ], RENTAL_SORTS, search=f"Search model, e.g. {short[0]}" if c["search"] else None, tries=tries)
     switch = "".join(
         f'<a class="chip{" chip--active" if o["key"] == c["key"] else ""}" href="{o["file"]}">{o["name"]} ({o["n"]})</a>'
         for o in CATS.values())
     scissor = c["key"] in ("es", "rt")
     head = "<th>Model</th><th>Working height</th>" + ("<th>Platform height</th>" if scissor else "<th>Outreach</th>") + "<th>Capacity</th><th>Machine weight</th><th>Power</th>"
     trs = "".join(
-        f'<tr><td><a href="rent-{r[0]}.html"><strong>{r[1]}</strong></a></td><td>{r[4]:g} m</td><td>{(r[5] if scissor else r[6]):g} m</td><td>{r[7]} kg</td><td>{r[8]:,} kg</td><td>{r[9]}</td></tr>'
-        for r in sorted(ms, key=lambda r: r[4]))
+        f'<tr><td><a href="{machine_href(it)}"><strong>{acf(it, "model")}</strong></a></td><td>{acf(it, "working_height"):g} m</td>'
+        f'<td>{acf(it, "platform_height" if scissor else "outreach"):g} m</td><td>{acf(it, "capacity")} kg</td>'
+        f'<td>{acf(it, "weight"):,} kg</td><td>{acf(it, "power")}</td></tr>'
+        for it in ms)
     others = "".join(f'<a class="chip" href="{o["file"]}">{o["name"]}</a>' for o in CATS.values() if o["key"] != c["key"])
     choose = "".join(f"<p><strong>{t}:</strong> {x}</p>" for t, x in c["choose"])
     intro = c["intro"].format(n=c["n"], lo=c["lo"], hi=c["hi"])
@@ -723,15 +845,8 @@ def page_rental_category(c):
 
 <!-- 2. LISTING with category-specific filters (filter URLs = noindex in WordPress) -->
 <section class="section" style="padding-top:32px">
-  <div class="wrap listing">
-    {sidebar(groups, c["n"], "machines")}
-    <div>
-      {listing_bar(c["n"], "machines", [("height-asc", "Working height (low to high)"), ("height-desc", "Working height (high to low)"), ("cap-desc", "Capacity (highest first)")])}
-      <div class="grid grid-3" data-listing data-noun="machines">
-        {"".join(items)}
-      </div>
-      {EMPTY}
-    </div>
+  <div class="wrap">
+    {listing(ctx)}
   </div>
 </section>
 
@@ -802,15 +917,17 @@ def page_rental_category(c):
 
 # ================================================================== SALES LANDING
 def page_sales_landing():
-    by_t = Counter(TYPES[s[4]][0] for s in SALE)
-    sold_t = Counter(TYPES[s["t"]][0] for s in SOLD)
-    to = Counter(s["to"] for s in SOLD if s["to"])
-    models = Counter(s["model"] for s in SOLD).most_common(4)
-    dated = sorted([s for s in SOLD if s["date"] and not s["date"].endswith("-00")], key=lambda s: s["date"], reverse=True)
-    first = min(s["date"] for s in SOLD if s["date"])
+    by_t = Counter(TYPES[tax(it, "machine_type")][0] for it in USED)
+    sold_t = Counter(TYPES[tax(it, "machine_type")][0] for it in SOLD)
+    to = Counter(acf(it, "sold_to") for it in SOLD if acf(it, "sold_to"))
+    models = Counter(acf(it, "model") for it in SOLD).most_common(4)
+    dated = sorted([it for it in SOLD if acf(it, "sold_date") and not acf(it, "sold_date").endswith("-00")],
+                   key=lambda it: acf(it, "sold_date"), reverse=True)
+    first = min(acf(it, "sold_date") for it in SOLD if acf(it, "sold_date"))
     recent = "".join(
-        f'<tr><td><a href="sold-{s["id"]}.html"><strong>{s["model"]}</strong></a></td><td>{TYPES[s["t"]][1]}</td><td>{s["year"]}</td><td>{s["origin"]}</td><td>{s["to"]}</td><td>{fmt_date(s["date"])}</td></tr>'
-        for s in dated[:6])
+        f'<tr><td><a href="{machine_href(it)}"><strong>{acf(it, "model")}</strong></a></td><td>{TYPES[tax(it, "machine_type")][1]}</td>'
+        f'<td>{acf(it, "year")}</td><td>{acf(it, "origin")}</td><td>{acf(it, "sold_to")}</td><td>{fmt_date(acf(it, "sold_date"))}</td></tr>'
+        for it in dated[:6])
     cats = [
         ("telescopic", "Telescopic Boom Lifts", "s-860sj-2004-sm", "JLG 660SJ, 860SJ, 1200SJP, 1350SJP and Genie S-65 booms."),
         ("articulated", "Articulated Boom Lifts", "s-600aj-1-sm", "JLG 600AJ and electric E450AJ / M450AJ booms."),
@@ -819,9 +936,9 @@ def page_sales_landing():
     tiles = []
     for v, name, img, txt in cats:
         avail = by_t.get(v, 0)
-        # used and sold listings both filter by category slug (same values as the home finder); commas tick several boxes
-        sold_cats = ",".join(TYPE_CAT[k] for k, (tv, _) in TYPES.items() if tv == v)
-        href = f"sales-used.html#category-{v}-boom-lifts" if avail else f"sales-sold.html#category-{sold_cats}"
+        # used and sold listings both filter by ?m_type= (machine_type slugs, same values as the home finder; comma = several)
+        cats = ",".join(k for k, (tv, _) in TYPES.items() if tv == v)
+        href = f"sales-used.html?m_type={cats}" if avail else f"sales-sold.html?m_type={cats}"
         meta = f"{avail} available · {sold_t.get(v, 0)} sold" if avail else f"{sold_t.get(v, 0)} sold · sourced on request"
         tiles.append(f'''<a class="tile" href="{href}">
         {media(img, "Used " + name.lower() + " for sale", "tile-img")}
@@ -845,7 +962,7 @@ def page_sales_landing():
   <div class="wrap r-hero-inner">
     <span class="eyebrow">Used equipment sales</span>
     <h1>Used Boom Lifts &amp; Scissor Lifts for Sale – UAE &amp; Export</h1>
-    <p class="hero-lead">Cherry Pickers Equipment buys and sells used access equipment from JLG and Genie. We have {len(SALE)} machines available now and have sold {N_SOLD} machines since {fmt_date(first)}, mostly to buyers in India and Vietnam.</p>
+    <p class="hero-lead">Cherry Pickers Equipment buys and sells used access equipment from JLG and Genie. We have {len(USED)} machines available now and have sold {N_SOLD} machines since {fmt_date(first)}, mostly to buyers in India and Vietnam.</p>
     <div class="hero-actions">
       <a class="btn btn--red" href="sales-used.html">View Used Equipment</a>
       <a class="btn btn--wa" href="{{{{WA_LINK}}}}">{icon("wa")} WhatsApp Sales</a>
@@ -861,7 +978,7 @@ def page_sales_landing():
       <div><h2>New Equipment</h2><p>Brand-new machines for sale. Tell us the model you need for price and delivery time.</p><span class="link-arrow">Browse new equipment →</span></div>
     </a>
     <a class="path-card" href="sales-used.html">
-      <span class="path-num">{len(SALE)}</span>
+      <span class="path-num">{len(USED)}</span>
       <div><h2>Used Equipment</h2><p>Machines in stock with year, origin and photos. Filter by type, brand and year.</p><span class="link-arrow">Browse used equipment →</span></div>
     </a>
     <a class="path-card path-card--navy" href="sales-sold.html">
@@ -938,7 +1055,7 @@ def sales_tabs(active):
         return ' class="active"' if active == k else ""
     return f'''<nav class="tabs" aria-label="Sales">
       <a{cls("new")} href="sales-new.html">New <span class="count">{len(NEW)}</span></a>
-      <a{cls("used")} href="sales-used.html">Used <span class="count">{len(SALE)}</span></a>
+      <a{cls("used")} href="sales-used.html">Used <span class="count">{len(USED)}</span></a>
       <a{cls("sold")} href="sales-sold.html">Sold <span class="count">{N_SOLD}</span></a>
     </nav>'''
 
@@ -962,36 +1079,20 @@ def sales_hero(h1, lead, img, alt, extra=""):
 </section>'''
 
 
-def sale_listing(rows, note=""):
-    """Sidebar + listing bar + sale cards for a list of SALE-format tuples."""
+def sale_listing(rows, note="", search=False):
+    """Filters + toolbar + results for machines for sale (used, or new once NEW has items)."""
     ybands = [(2015, 2100, "2015 and newer"), (2008, 2015, "2008 – 2014"), (0, 2008, "2007 and older")]
     hbands = [(0, 20, "Up to 20 m"), (20, 30, "20 – 30 m"), (30, 99, "30 m and above")]
-    ft, fb, fy, fh, fo = Counter(), Counter(), Counter(), Counter(), Counter()
-    items = []
-    for s in sorted(rows, key=lambda s: -s[1]):
-        tv = TYPE_CAT[s[4]]; bv = slug(s[3]); yv, _ = band(s[1], ybands); hv, _ = band(s[6], hbands); ov = slug(s[5])
-        ft[tv] += 1; fb[bv] += 1; fy[yv] += 1; fh[hv] += 1; fo[ov] += 1
-        items.append(sale_card(s[0], f"category={tv} brand={bv} year={yv} height={hv} origin={ov}"))
-    origins = sorted({s[5] for s in rows})
-    groups = [
-        filter_group("Machine type", "category", [(c["slug"], c["one"], ft[c["slug"]]) for c in CATS.values() if ft[c["slug"]]]),
-        filter_group("Brand", "brand", [("jlg", "JLG", fb["jlg"]), ("genie", "Genie", fb["genie"])]),
-        filter_group("Year", "year", [(slug(l), l, fy[slug(l)]) for _, _, l in ybands]),
-        filter_group("Working height", "height", [(slug(l), l, fh[slug(l)]) for _, _, l in hbands]),
-        filter_group("Machine origin", "origin", [(slug(o), o, fo[slug(o)]) for o in origins]),
-    ]
-    n = len(rows)
-    return f'''<div class="listing">
-      {sidebar(groups, n, "machines")}
-      <div>
-        {listing_bar(n, "machines", [("year-desc", "Year (newest first)"), ("year-asc", "Year (oldest first)"), ("height-desc", "Working height (highest first)")])}
-        <div class="grid grid-3" data-listing data-noun="machines">
-          {"".join(items)}
-        </div>
-        {EMPTY}
-        {note}
-      </div>
-    </div>'''
+    origins = sorted({acf(it, "origin") for it in rows})
+    ctx = listing_ctx("used", rows, [
+        ("Machine type", "m_type", [(c["slug"], c["one"]) for c in CATS.values()]),
+        ("Brand", "m_brand", [("jlg", "JLG"), ("genie", "Genie")]),
+        ("Year", "m_year", band_options(ybands)),
+        ("Working height", "m_height", band_options(hbands)),
+        ("Machine origin", "m_origin", [(slug(o), o) for o in origins]),
+    ], [("year-desc", "Year (newest first)"), ("year-asc", "Year (oldest first)"), ("working_height-desc", "Working height (highest first)")],
+        search="Search model, e.g. 860SJ" if search else None, tries=("860SJ", "E450AJ", "Genie"), note=note)
+    return listing(ctx)
 
 
 # ================================================================== SALES NEW
@@ -1025,13 +1126,13 @@ def page_sales_new():
 
 # ================================================================== SALES USED
 def page_sales_used():
-    note = f'<p class="small muted mt-24">Mockup shows page 1 of your current listing ({len(SALE)} machines – one duplicate listing merged). Grey cards = no reliable photo yet.</p>'
-    return f'''{sales_hero("Used Access Equipment for Sale", f"{len(SALE)} used boom lifts in stock from JLG and Genie, with year, origin and photos. Contact us for price, more photos or a walk-around video.", "s-600aj-1", "Used JLG 600AJ articulated boom lift for sale")}
+    note = f'<p class="small muted mt-24">Mockup shows page 1 of your current listing ({len(USED)} machines – one duplicate listing merged). Grey cards = no reliable photo yet.</p>'
+    return f'''{sales_hero("Used Access Equipment for Sale", f"{len(USED)} used boom lifts in stock from JLG and Genie, with year, origin and photos. Contact us for price, more photos or a walk-around video.", "s-600aj-1", "Used JLG 600AJ articulated boom lift for sale")}
 
 <section class="section" style="padding-top:28px">
   <div class="wrap">
     {sales_tabs("used")}
-    {sale_listing(SALE, note)}
+    {sale_listing(USED, note, search=True)}
   </div>
 </section>
 
@@ -1051,32 +1152,25 @@ def page_sales_used():
 
 # ================================================================== SALES SOLD
 def page_sales_sold():
-    """Sold records: same layout as Used (sidebar filters + listing bar + machine cards), 12 cards per 'Show more'."""
+    """Sold records: same layout as Used (filters + toolbar + machine cards), 24 per page."""
     ybands = [(2016, 2100, "2016 and newer"), (2011, 2016, "2011 – 2015"), (2006, 2011, "2006 – 2010"), (0, 2006, "2005 and older")]
-    ft, fb, fy, fo, fto, fys = Counter(), Counter(), Counter(), Counter(), Counter(), Counter()
-    items = []
-    for s in sorted(SOLD, key=lambda s: s["date"] or "0000", reverse=True):
-        tv = TYPE_CAT[s["t"]]
-        bv = slug(s["model"].split()[0])
-        yv, _ = band(s["year"], ybands)
-        ov = slug(s["origin"])
-        tov = slug(s["to"]) if s["to"] else "not-recorded"
-        ysv = s["date"][:4] if s["date"] else "not-recorded"
-        ft[tv] += 1; fb[bv] += 1; fy[yv] += 1; fo[ov] += 1; fto[tov] += 1; fys[ysv] += 1
-        items.append(sold_card(s, f"category={tv} brand={bv} year={yv} origin={ov} to={tov} sold={ysv}"))
-    first = min(s["date"] for s in SOLD if s["date"])
-    top = Counter(s["model"] for s in SOLD).most_common(1)[0]
-    origins = [o for o, _ in Counter(s["origin"] for s in SOLD).most_common()]
-    dests = [d for d, _ in Counter(s["to"] for s in SOLD if s["to"]).most_common()]
-    years = sorted({k for k in fys if k != "not-recorded"}, reverse=True) + ["not-recorded"]
-    groups = [
-        filter_group("Machine type", "category", [(c["slug"], c["one"], ft[c["slug"]]) for c in CATS.values() if ft[c["slug"]]]),
-        filter_group("Brand", "brand", [("jlg", "JLG", fb["jlg"]), ("genie", "Genie", fb["genie"])]),
-        filter_group("Sold to", "to", [(slug(d), d, fto[slug(d)]) for d in dests] + ([("not-recorded", "Not recorded", fto["not-recorded"])] if fto["not-recorded"] else [])),
-        filter_group("Year sold", "sold", [(y, y if y != "not-recorded" else "Not recorded", fys[y]) for y in years if fys[y]]),
-        filter_group("Model year", "year", [(slug(l), l, fy[slug(l)]) for _, _, l in ybands]),
-        filter_group("Machine origin", "origin", [(slug(o), o, fo[slug(o)]) for o in origins]),
-    ]
+    fto = Counter(slug(acf(it, "sold_to")) if acf(it, "sold_to") else "not-recorded" for it in SOLD)
+    first = min(acf(it, "sold_date") for it in SOLD if acf(it, "sold_date"))
+    top = Counter(acf(it, "model") for it in SOLD).most_common(1)[0]
+    origins = [o for o, _ in Counter(acf(it, "origin") for it in SOLD).most_common()]
+    dests = [d for d, _ in Counter(acf(it, "sold_to") for it in SOLD if acf(it, "sold_to")).most_common()]
+    years = sorted({acf(it, "sold_date")[:4] for it in SOLD if acf(it, "sold_date")}, reverse=True)
+    ctx = listing_ctx("sold", SOLD, [
+        ("Machine type", "m_type", [(c["slug"], c["one"]) for c in CATS.values()]),
+        ("Brand", "m_brand", [("jlg", "JLG"), ("genie", "Genie")]),
+        ("Sold to", "m_sold_to", [(slug(d), d) for d in dests] + [("not-recorded", "Not recorded")]),
+        ("Year sold", "m_sold_year", [(y, y) for y in years] + [("not-recorded", "Not recorded")]),
+        ("Model year", "m_year", band_options(ybands)),
+        ("Machine origin", "m_origin", [(slug(o), o) for o in origins]),
+    ], [("sold_date-desc", "Most recently sold"), ("sold_date-asc", "Oldest sales first"),
+        ("year-desc", "Model year (newest first)"), ("year-asc", "Model year (oldest first)")],
+        nouns=("record", "records"), label="records", search="Search model, e.g. 860SJ", tries=("860SJ", "660SJ", "Genie"),
+        note='<p class="small muted mt-24">Photos are model photos from our rental fleet and sales stock, not the sold unit. Grey cards = no photo of that model yet.</p>')
     stats = f'''<div class="sold-stats">
       <div><strong>{N_SOLD}</strong><span>Machines sold</span></div>
       <div><strong>{fto["india"]}</strong><span>To India</span></div>
@@ -1085,24 +1179,12 @@ def page_sales_sold():
     </div>'''
     lead = (f"A record of every used boom lift and scissor lift we have sold: {N_SOLD} machines since {fmt_date(first)}, "
             f"exported mainly to India ({fto['india']}) and Vietnam ({fto['vietnam']}). Looking for one like these? We can source it.")
-    note = '<p class="small muted mt-24">Photos are model photos from our rental fleet and sales stock, not the sold unit. Grey cards = no photo of that model yet.</p>'
     return f'''{sales_hero("Sold Access Equipment – Our Sales Records", lead, "s-600aj-2", "Used JLG boom lift sold and exported", stats)}
 
 <section class="section" style="padding-top:28px">
   <div class="wrap">
     {sales_tabs("sold")}
-    <div class="listing">
-      {sidebar(groups, N_SOLD, "records")}
-      <div>
-        {listing_bar(N_SOLD, "records", [("date-desc", "Most recently sold"), ("date-asc", "Oldest sales first"), ("year-desc", "Model year (newest first)"), ("year-asc", "Model year (oldest first)")])}
-        <div class="grid grid-3" data-listing data-page-size="12" data-noun="records">
-          {"".join(items)}
-        </div>
-        {EMPTY.replace("No machines match", "No records match")}
-        <div class="center mt-24"><button class="btn btn--ghost" data-more>Show more records</button></div>
-        {note}
-      </div>
-    </div>
+    {listing(ctx)}
   </div>
 </section>
 
@@ -1110,7 +1192,7 @@ def page_sales_sold():
   <div class="wrap flex-between" style="align-items:center">
     <div style="max-width:700px">
       <h2 style="margin-bottom:6px">Looking for One Available Now?</h2>
-      <p class="muted" style="margin:0">{len(SALE)} used boom lifts in stock with year, origin and photos – ready for UAE delivery or export.</p>
+      <p class="muted" style="margin:0">{len(USED)} used boom lifts in stock with year, origin and photos – ready for UAE delivery or export.</p>
     </div>
     <a class="btn btn--navy" href="sales-used.html">View Used Equipment</a>
   </div>
@@ -1122,12 +1204,12 @@ def page_sales_sold():
 
 # ================================================================== SOLD DETAIL (one record) – same layout as the used-sale detail page
 def page_sold_detail(s):
-    y, m, origin = s["year"], s["model"], s["origin"]
-    tname = TYPES[s["t"]][1]
-    cat = SLUG_CAT[TYPE_CAT[s["t"]]]
-    sold = fmt_date(s["date"])
-    to = s["to"] or "Not recorded"
-    same = [x for x in SOLD if x["model"] == m]
+    y, m, origin = acf(s, "year"), acf(s, "model"), acf(s, "origin")
+    mtype = tax(s, "machine_type")
+    tname = TYPES[mtype][1]
+    sold = fmt_date(acf(s, "sold_date"))
+    to = acf(s, "sold_to") or "Not recorded"
+    same = [x for x in SOLD if acf(x, "model") == m]
     rent = MODEL_RENT.get(m)
     wh = MODEL_WH.get(m)
 
@@ -1136,7 +1218,7 @@ def page_sold_detail(s):
               ("Sold to", to), ("Date sold", sold), ("Status", '<span class="badge badge--sold">Sold</span>')]
     rec_rows = "".join(f"<tr><th>{k}</th><td>{v}</td></tr>" for k, v in record)
     if rent:
-        _, _, _, _, rwh, rph, rout, rcap, rwt, rpw, _, _ = rent
+        rwh, rph, rout, rcap, rwt, rpw = (acf(rent, k) for k in ("working_height", "platform_height", "outreach", "capacity", "weight", "power"))
         spec = [("Working height", f"{rwh:g} m"), ("Platform height", f"{rph:g} m") if rph else ("Horizontal outreach", f"{rout:g} m"),
                 ("Safe working load", f"{rcap} kg"), ("Machine weight", f"{rwt:,} kg"), ("Power", rpw)]
         spec_src = f"Model specs from our rental fleet data for the {m} – not measured on this unit."
@@ -1149,29 +1231,29 @@ def page_sold_detail(s):
     spec_rows = "".join(f"<tr><th>{k}</th><td>{v}</td></tr>" for k, v in spec)
 
     # similar: used stock of the same type (same model first), then other sold records of this model
-    avail = sorted((x for x in SALE if x[4] == s["t"]), key=lambda x: (x[2] != m, -x[1]))[:3]
+    avail = sorted((x for x in USED if tax(x, "machine_type") == mtype), key=lambda x: (acf(x, "model") != m, -acf(x, "year")))[:3]
     if len(avail) < 3:
-        avail += sorted((x for x in SALE if x[4] != s["t"]), key=lambda x: -x[1])[:3 - len(avail)]
-    others = sorted((x for x in same if x is not s), key=lambda x: x["date"] or "0000", reverse=True)[:3]
+        avail += sorted((x for x in USED if tax(x, "machine_type") != mtype), key=lambda x: -acf(x, "year"))[:3 - len(avail)]
+    others = sorted((x for x in same if x is not s), key=lambda x: acf(x, "sold_date") or "0000", reverse=True)[:3]
     others_html = "" if not others else f'''
 <section class="section section--alt section--tight">
   <div class="wrap">
     <div class="flex-between section-head" style="max-width:none"><h2 class="mt-0">Other {m} Machines We Have Sold</h2><a class="link-arrow" href="sales-sold.html">All {N_SOLD} sold records →</a></div>
     <div class="grid grid-3">
-      {"".join(sold_card(x) for x in others)}
+      {"".join(machine_card(x) for x in others)}
     </div>
   </div>
 </section>'''
-    where = f" and exported to {s['to']}" if s["to"] else ""
-    when = f" in {sold}" if s["date"] else ""
-    rent_link = (f'<p class="mt-24"><a class="link-arrow" href="rent-{rent[0]}.html">Need a {m} for a short job? Rent one from our fleet →</a></p>'
+    where = f" and exported to {acf(s, 'sold_to')}" if acf(s, "sold_to") else ""
+    when = f" in {sold}" if acf(s, "sold_date") else ""
+    rent_link = (f'<p class="mt-24"><a class="link-arrow" href="{machine_href(rent)}">Need a {m} for a short job? Rent one from our fleet →</a></p>'
                  if rent else "")
     return f'''<section>
   <div class="wrap">
     <!-- SOLD BANNER: the page stays live after the sale (keeps its search traffic) and points buyers to similar machines -->
     <div class="sold-banner">
       <span><strong>This machine has been sold.</strong> Looking for a {m}? See machines available now, or ask us to source one.</span>
-      <a class="btn btn--red btn--sm" href="sales-used.html#category-{cat["slug"]}">See available machines</a>
+      <a class="btn btn--red btn--sm" href="sales-used.html?m_type={mtype}">See available machines</a>
     </div>
   </div>
   <div class="wrap detail-top">
@@ -1251,7 +1333,7 @@ def page_sold_detail(s):
   <div class="wrap">
     <div class="flex-between section-head" style="max-width:none"><h2 class="mt-0">Similar Machines Available Now</h2><a class="link-arrow" href="sales-used.html">All used equipment →</a></div>
     <div class="grid grid-3">
-      {"".join(sale_card(x[0]) for x in avail)}
+      {"".join(machine_card(x) for x in avail)}
     </div>
   </div>
 </section>
@@ -1372,8 +1454,6 @@ SITE_FONTS = "https://fonts.googleapis.com/css2?family=Barlow:wght@600;700;800&f
 CARET = '<svg class="caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>'
 TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
 
-# TODO: sample hour-meter readings from the v3 design – replace with the real hours before launch.
-HOURS = {"a13": "7,850", "a4": "2,140", "a1": "6,320", "a8": "8,900"}
 
 # Home FAQ: one list feeds both the <details> accordion and the FAQPage JSON-LD in <head>.
 HOME_FAQ = [
@@ -1402,20 +1482,22 @@ def home_faq_jsonld():
 
 
 def home_rcard(key):
-    """Home 'Fast-moving rental machines' card. Title + Details -> the machine's own page."""
-    k, m, brand, cat, wh, ph, out, cap, wt, pw, img, st = RENTAL[key]
-    c = CATS[cat]
+    """Home 'Fast-moving rental machines' card. Title + Details -> the machine's own page. key = 'rental:<slug>'."""
+    it = BY_KEY[key]
+    m, img, ph, out, cap, wh, pw = (acf(it, k) for k in ("model", "image", "platform_height", "outreach", "capacity", "working_height", "power"))
+    k = it["id"]
+    c = SLUG_CAT[tax(it, "machine_type")]
     mid = (f"<div><strong>{ph:g} m</strong><span>Platform ht.</span></div>" if ph
            else f"<div><strong>{out:g} m</strong><span>Outreach</span></div>")
-    pill = '<span class="pill avail">Available</span>' if st == "ok" else '<span class="pill busy">On hire – ask for date</span>'
+    pill = '<span class="pill avail">Available</span>' if acf(it, "availability") == "available" else '<span class="pill busy">On hire – ask for date</span>'
     return f'''<article class="mc">
         <div class="mc-img">{img_tag(img + "-sm", f"{m} for rent in Dubai")}{pill}</div>
         <div class="mc-body">
-          <h3><a href="rent-{k}.html">{m}</a></h3>
+          <h3><a href="machine-{k}.html">{m}</a></h3>
           <div class="type">{c['one']} · {pw}</div>
           <div class="specs"><div><strong>{wh:g} m</strong><span>Working ht.</span></div>{mid}<div><strong>{cap} kg</strong><span>Capacity</span></div></div>
           <div class="mc-btns">
-            <a class="btn btn-out btn-sm" href="rent-{k}.html">Details</a>
+            <a class="btn btn-out btn-sm" href="machine-{k}.html">Details</a>
             <a class="btn btn-red btn-sm" href="#enquiry" data-want="rent">Get a Quote</a>
             <a class="btn btn-wa btn-icon" href="{wa_url(f"Hi, I need a quote for the {m}.")}" target="_blank" rel="noopener" aria-label="WhatsApp about {m}">{WA_SVG}</a>
           </div>
@@ -1423,13 +1505,14 @@ def home_rcard(key):
       </article>'''
 
 
-def home_scard(sid):
-    """Home 'High-demand used equipment' card. Photo + title -> the machine's own page under sales/used/."""
-    i, y, m, brand, t, origin, wh, img, note = SALEMAP[sid]
-    tname = TYPES[t][1]
-    href = f"sale-{i}.html"
-    hours = HOURS.get(sid, "On request")
-    todo = f"<!-- TODO: sample hours ({hours}) – replace with the real hour-meter reading -->" if sid in HOURS else ""
+def home_scard(key):
+    """Home 'High-demand used equipment' card. Photo + title -> the machine's own page under sales/used/. key = 'used:<slug>'."""
+    it = BY_KEY[key]
+    y, m, origin, wh, img = (acf(it, k) for k in ("year", "model", "origin", "working_height", "image"))
+    tname = TYPES[tax(it, "machine_type")][1]
+    href = machine_href(it)
+    hours = acf(it, "hours") or "On request"
+    todo = f"<!-- TODO: sample hours ({hours}) – replace with the real hour-meter reading -->" if it.get("_comment_hours") else ""
     return f'''<article class="mc">
         <a class="mc-img" href="{href}">{img_tag(img + "-sm", f"Used {y} {m} {tname.lower()} for sale")}<span class="pill sale">For Sale</span><span class="pill export">Export available</span></a>
         <div class="mc-body">
@@ -1557,7 +1640,7 @@ PAGE = """<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="{fonts}" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/{css}">
-{head_extra}</head>
+{head_extra}{cpe_config}</head>
 <body{body_class}>
 {header}
 <main>
@@ -1566,7 +1649,7 @@ PAGE = """<!DOCTYPE html>
 </main>
 {footer}
 <script src="assets/js/main.js" defer></script>
-</body>
+{scripts}</body>
 </html>
 """
 
@@ -1677,11 +1760,11 @@ def render_tokens(html, kind="rental"):
     html = re.sub(r"\{\{media:([^}]*)\}\}", _media, html)
     html = re.sub(r"\{\{heroimg:([^|}]*)\|([^}]*)\}\}", lambda m: hero_img(m.group(1), m.group(2)), html)
     html = re.sub(r"\{\{icon:(\w+)\}\}", lambda m: icon(m.group(1)), html)
-    html = re.sub(r"\{\{rcard:(\w+)\}\}", lambda m: rental_card(m.group(1)), html)
-    html = re.sub(r"\{\{scard:(\w+)\}\}", lambda m: sale_card(m.group(1)), html)
+    # machine cards by 'listing_status:slug', e.g. {{card:rental:genie-gs-2646}} / {{card:used:2018-jlg-e450aj}}
+    html = re.sub(r"\{\{card:([\w:-]+)\}\}", lambda m: machine_card(BY_KEY[m.group(1)]), html)
     # home page tokens
-    html = re.sub(r"\{\{hrcard:(\w+)\}\}", lambda m: home_rcard(m.group(1)), html)
-    html = re.sub(r"\{\{hscard:(\w+)\}\}", lambda m: home_scard(m.group(1)), html)
+    html = re.sub(r"\{\{hrcard:([\w:-]+)\}\}", lambda m: home_rcard(m.group(1)), html)
+    html = re.sub(r"\{\{hscard:([\w:-]+)\}\}", lambda m: home_scard(m.group(1)), html)
     html = html.replace("{{homefaq}}", home_faq_html())
     html = re.sub(r"\{\{aboutnav:([\w-]+)\}\}", lambda m: about_nav(m.group(1)), html)
     html = re.sub(r"\{\{servicesnav:([\w-]+)\}\}", lambda m: services_nav(m.group(1)), html)
@@ -1715,7 +1798,7 @@ def rewrite_links(html, path):
         if name not in LINKS:
             return m.group(0)
         return f'{m.group(1)}="{root}{LINKS[name]}index.html{rest}"'
-    html = re.sub(r'(href)="([a-z0-9\-]+\.html)(#[^"]*)?"', _href, html)
+    html = re.sub(r'(href)="([a-z0-9\-]+\.html)([?#][^"]*)?"', _href, html)
     html = re.sub(r'((?:src|data-src|href))="assets/', lambda m: f'{m.group(1)}="{root}assets/', html)
     return html
 
@@ -1752,12 +1835,12 @@ PAGES += [
      "Rent the Genie GS-3246 electric scissor lift in Dubai: 11.75 m working height, 318 kg capacity.", "rental",
      [("Rental", "rental.html"), ("Electric Scissor Lifts", CATS["es"]["file"]), ("Genie GS-3246", "")], "rental-detail"),
     ("sales/index.html", "Used Boom Lifts & Scissor Lifts for Sale – UAE & Export | Cherry Pickers Equipment",
-     f"Buy used JLG and Genie boom lifts and scissor lifts. {len(SALE)} machines available, {N_SOLD} sold and exported. Contact for price.", "sales", [("Sales", "")], page_sales_landing),
+     f"Buy used JLG and Genie boom lifts and scissor lifts. {len(USED)} machines available, {N_SOLD} sold and exported. Contact for price.", "sales", [("Sales", "")], page_sales_landing),
     ("sales/new/index.html", "New Access Equipment for Sale in UAE | Cherry Pickers Equipment",
      "New boom lifts and scissor lifts for sale in the UAE. Tell us the machine you need for price and delivery time.", "sales",
      [("Sales", "sales.html"), ("New Equipment", "")], page_sales_new),
     ("sales/used/index.html", "Used Access Equipment for Sale in UAE | Cherry Pickers Equipment",
-     f"{len(SALE)} used boom lifts for sale with year, origin and photos. Filter by type, brand, year and working height.", "sales",
+     f"{len(USED)} used boom lifts for sale with year, origin and photos. Filter by type, brand, year and working height.", "sales",
      [("Sales", "sales.html"), ("Used Equipment", "")], page_sales_used),
     ("sales/sold/index.html", f"Sold Access Equipment – {N_SOLD} Sales Records | Cherry Pickers Equipment",
      f"Records of {N_SOLD} used boom lifts and scissor lifts sold and exported by Cherry Pickers Equipment, by model, year and destination.", "sales",
@@ -1765,10 +1848,10 @@ PAGES += [
     ("sales/used/2010-jlg-600aj/index.html", "Used 2010 JLG 600AJ Articulated Boom Lift for Sale | Cherry Pickers Equipment",
      "Used 2010 JLG 600AJ articulated boom lift for sale: 20.5 m working height, Australian origin. Contact for price.", "sales",
      [("Sales", "sales.html"), ("Used Equipment", "sales-used.html"), ("2010 JLG 600AJ", "")], "sale-detail"),
-    (SOLD_SAMPLE_PATH, f"Sold: {SOLD_SAMPLE['year']} {SOLD_SAMPLE['model']} {TYPES[SOLD_SAMPLE['t']][1]} | Cherry Pickers Equipment",
-     f"{SOLD_SAMPLE['year']} {SOLD_SAMPLE['model']} {TYPES[SOLD_SAMPLE['t']][1].lower()} from {SOLD_SAMPLE['origin']}, sold {fmt_date(SOLD_SAMPLE['date'])}"
-     f"{' to ' + SOLD_SAMPLE['to'] if SOLD_SAMPLE['to'] else ''}. Looking for one like it? We source used JLG and Genie machines.", "sales",
-     [("Sales", "sales.html"), ("Sold Equipment", "sales-sold.html"), (f"{SOLD_SAMPLE['year']} {SOLD_SAMPLE['model']}", "")],
+    (SOLD_SAMPLE_PATH, f"Sold: {SOLD_SAMPLE['title']} {TYPES[tax(SOLD_SAMPLE, 'machine_type')][1]} | Cherry Pickers Equipment",
+     f"{SOLD_SAMPLE['title']} {TYPES[tax(SOLD_SAMPLE, 'machine_type')][1].lower()} from {acf(SOLD_SAMPLE, 'origin')}, sold {fmt_date(acf(SOLD_SAMPLE, 'sold_date'))}"
+     f"{' to ' + acf(SOLD_SAMPLE, 'sold_to') if acf(SOLD_SAMPLE, 'sold_to') else ''}. Looking for one like it? We source used JLG and Genie machines.", "sales",
+     [("Sales", "sales.html"), ("Sold Equipment", "sales-sold.html"), (SOLD_SAMPLE["title"], "")],
      (lambda: page_sold_detail(SOLD_SAMPLE))),
     ("services/index.html", "Access Equipment Services in UAE | Cherry Pickers Equipment",
      "Equipment rental, maintenance and repair, and used machine sales across the UAE.", "services", [("Services", "")], "services"),
@@ -1818,7 +1901,7 @@ WA_MSG = {
     "services/on-site-repairs/index.html": f"{WA_HI} I have a machine breakdown and need an on-site repair.\nBrand & model:\nProblem:\nLocation:",
     "services/workshop-services/index.html": f"{WA_HI} I'd like to book a workshop service.\nBrand & model:\nWork needed:",
 }
-WA_MSG[SOLD_SAMPLE_PATH] = (f"{WA_HI} I'm looking for a machine like the {SOLD_SAMPLE['year']} {SOLD_SAMPLE['model']} you sold.\n"
+WA_MSG[SOLD_SAMPLE_PATH] = (f"{WA_HI} I'm looking for a machine like the {SOLD_SAMPLE['title']} you sold.\n"
                             f"Year range:\nCountry:\n{SITE}{SOLD_SAMPLE_PATH.replace('index.html', '')}")
 for _c in CATS.values():
     _m = _c['one'].lower()
@@ -1838,8 +1921,13 @@ def build():
     # /sales/available/ was renamed to /sales/used/
     shutil.rmtree(OUT / "sales" / "available", ignore_errors=True)
     built = []
+    global CPE_PAGE
     for path, title, desc, active, crumbs, body in PAGES:
+        CPE_PAGE = None   # set by listing() while the body renders
         raw = body() if callable(body) else (SRC / "pages" / f"{body}.html").read_text(encoding="utf-8")
+        # WordPress: wp_localize_script('cpe-listing', 'CPE', ...) + wp_enqueue_script('cpe-listing', 'assets/js/listing.js')
+        cpe_config = f"<script>window.CPE = {json.dumps(CPE_PAGE)};</script>\n" if CPE_PAGE else ""
+        scripts = '<script src="assets/js/listing.js" defer></script>\n' if CPE_PAGE else ""
         robots = '<meta name="robots" content="noindex, follow">\n' if path == "sales/new/index.html" and not NEW else ""
         kind = {"sales": "sales", "services": "service"}.get(active, "rental")
         body_html, crumbs_html = render_tokens(raw, kind), breadcrumbs(crumbs)
@@ -1856,7 +1944,7 @@ def build():
                            canonical=SITE + path.replace("index.html", ""), robots=robots,
                            fonts=HOME_FONTS if home else SITE_FONTS,
                            css="home.css" if home else "style.css",
-                           head_extra=home_faq_jsonld() if home else "",
+                           head_extra=home_faq_jsonld() if home else "", cpe_config=cpe_config, scripts=scripts,
                            body_class=' class="home"' if home else "",
                            header=header_home() if home else header(active), crumbs=crumbs_html, body=body_html,
                            footer=footer_home() if home else footer())

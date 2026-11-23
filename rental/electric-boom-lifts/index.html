@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/css/style.css">
+<script>window.CPE = {"whatsapp": "971561018428", "pageType": "rental", "perPage": 24, "nouns": ["machine", "machines"], "search": true};</script>
 </head>
 <body>
 <div class="mock-note">UI mockup for review · real photos and data from your website · grey boxes = photos still needed</div>
@@ -69,79 +70,101 @@
 
 <!-- 2. LISTING with category-specific filters (filter URLs = noindex in WordPress) -->
 <section class="section" style="padding-top:32px">
-  <div class="wrap listing">
-    <aside class="filters" aria-label="Filter machines">
-      <div class="filters-head"><h2>Filter</h2><div class="filters-head-actions"><a href="#" data-clear>Clear all</a><button type="button" class="filters-x" data-filter-dismiss aria-label="Close filters">&times;</button></div></div>
-      <div class="filter-group"><h3>Working height</h3><label data-label="Up to 15 m"><input type="checkbox" name="height" value="up-to-15-m"> Up to 15 m <span class="count">1</span></label><label data-label="15 – 18 m"><input type="checkbox" name="height" value="15-18-m"> 15 – 18 m <span class="count">1</span></label><label data-label="18 m and above"><input type="checkbox" name="height" value="18-m-and-above"> 18 m and above <span class="count">1</span></label></div><div class="filter-group"><h3>Horizontal outreach</h3><label data-label="Up to 8 m"><input type="checkbox" name="out" value="up-to-8-m"> Up to 8 m <span class="count">2</span></label><label data-label="8 m and above"><input type="checkbox" name="out" value="8-m-and-above"> 8 m and above <span class="count">1</span></label></div><div class="filter-group"><h3>Brand</h3><label data-label="JLG"><input type="checkbox" name="brand" value="jlg"> JLG <span class="count">2</span></label><label data-label="Snorkel"><input type="checkbox" name="brand" value="snorkel"> Snorkel <span class="count">1</span></label></div><div class="filter-group"><h3>Availability</h3><label data-label="Available now"><input type="checkbox" name="avail" value="available"> Available now <span class="count">3</span></label></div>
-      <div class="filter-close"><button class="btn btn--red btn--block" data-filter-close>Show 3 machines</button></div>
-    </aside>
-    <div>
-      <div class="listing-bar">
-        <span class="result-count">Showing <strong><span data-result-count>3</span> machines</strong></span>
-        <div class="listing-bar-actions">
-          <button class="btn btn--ghost btn--sm filter-open" data-filter-open><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.5V19l4 2v-8.5z"/></svg> Filter</button>
-          <label class="sort-group"><span class="sort-label">Sort by:</span><select class="select" data-sort><option value="height-asc">Working height (low to high)</option><option value="height-desc">Working height (high to low)</option><option value="cap-desc">Capacity (highest first)</option></select></label>
+  <div class="wrap">
+    <div class="listing cpe-listing">
+      <form id="cpe-filters" class="filters cpe-listing-filters" method="get" aria-label="Filter machines" data-cpe-filters>
+      <div class="filters-head"><h2>Filter</h2><div class="filters-head-actions"><a href="?" data-cpe-clear-all>Clear all</a><button type="button" class="filters-x" data-cpe-filter-close aria-label="Close filters">&times;</button></div></div>
+      <div class="filter-group cpe-listing-filters__group" role="group" aria-labelledby="cpe-g-m_height"><h3 id="cpe-g-m_height">Working height</h3><label data-label="Up to 15 m"><input type="checkbox" name="m_height" value="-15"> Up to 15 m <span class="count">1</span></label><label data-label="15 – 18 m"><input type="checkbox" name="m_height" value="15-18"> 15 – 18 m <span class="count">1</span></label><label data-label="18 m and above"><input type="checkbox" name="m_height" value="18-"> 18 m and above <span class="count">1</span></label></div><div class="filter-group cpe-listing-filters__group" role="group" aria-labelledby="cpe-g-m_outreach"><h3 id="cpe-g-m_outreach">Horizontal outreach</h3><label data-label="Up to 8 m"><input type="checkbox" name="m_outreach" value="-8"> Up to 8 m <span class="count">2</span></label><label data-label="8 m and above"><input type="checkbox" name="m_outreach" value="8-"> 8 m and above <span class="count">1</span></label></div><div class="filter-group cpe-listing-filters__group" role="group" aria-labelledby="cpe-g-m_brand"><h3 id="cpe-g-m_brand">Brand</h3><label data-label="JLG"><input type="checkbox" name="m_brand" value="jlg"> JLG <span class="count">2</span></label><label data-label="Snorkel"><input type="checkbox" name="m_brand" value="snorkel"> Snorkel <span class="count">1</span></label></div><div class="filter-group cpe-listing-filters__group" role="group" aria-labelledby="cpe-g-m_availability"><h3 id="cpe-g-m_availability">Availability</h3><label data-label="Available now"><input type="checkbox" name="m_availability" value="available"> Available now <span class="count">3</span></label></div>
+      <div class="filter-close cpe-listing-filters__apply"><button type="submit" class="btn btn--red btn--block" data-cpe-filter-apply>Show 3 machines</button></div>
+    </form>
+      <div class="cpe-listing-main">
+        <div class="cpe-listing-toolbar">
+        <div class="cpe-listing-search" role="search">
+          <label class="sr-only" for="cpe-q">Search machines</label>
+          <span class="cpe-listing-search__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+          <input id="cpe-q" class="cpe-listing-search__input" type="search" name="q" form="cpe-filters" placeholder="Search model, e.g. AB38E" aria-label="Search machines" autocomplete="off" spellcheck="false" data-cpe-search>
+          <button type="button" class="cpe-listing-search__clear" aria-label="Clear search" data-cpe-search-clear hidden>&times;</button>
+        </div>
+        <div class="cpe-listing-toolbar__actions">
+          <button type="button" class="btn btn--ghost btn--sm filter-open" data-cpe-filter-open><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.5V19l4 2v-8.5z"/></svg> Filter</button>
+          <label class="sort-group"><span class="sort-label">Sort by:</span><select class="select cpe-listing-toolbar__sort" name="m_sort" form="cpe-filters" data-cpe-sort><option value="working_height-asc">Working height (low to high)</option><option value="working_height-desc">Working height (high to low)</option><option value="capacity-desc">Capacity (highest first)</option></select></label>
         </div>
       </div>
-      <div class="active-chips" data-active-chips></div>
-      <div class="grid grid-3" data-listing data-noun="machines">
-        <article class="machine-card" data-item data-facets="height=up-to-15-m out=up-to-8-m brand=snorkel avail=available" data-s-height="13.5" data-s-cap="215">
+      <div class="active-chips cpe-listing-chips" data-cpe-chips></div>
+        <div id="cpe-results" class="cpe-listing-results" data-total="3" data-paged="1">
+        <h2 class="cpe-listing-results__heading" tabindex="-1" data-cpe-heading>Showing 3 machines</h2>
+        <div class="grid grid-3 cpe-listing-results__grid" data-cpe-grid>
+          <article class="machine-card cpe-card cpe-card--rental" data-cpe-item data-machine-type="electric-boom-lifts" data-machine-brand="snorkel" data-model="Snorkel AB38E" data-working-height="13.5" data-capacity="215" data-outreach="6.1" data-availability="available">
   <div class="card-top-badges"><span class="badge badge--ok">Available</span></div>
   <div class="media ratio-4-3"><img src="../../assets/img/r-ab38e-sm.webp" alt="Snorkel AB38E electric boom lift for rent in Dubai" width="640" height="480" loading="lazy" decoding="async"></div>
-  <div class="machine-card-body">
+  <div class="machine-card-body cpe-card__body">
     <div>
-      <h3><a href="../../rental/electric-boom-lifts/snorkel-ab38e/index.html">Snorkel AB38E</a></h3>
-      <div class="machine-type">Electric Boom Lift · Electric</div>
+      <h3 class="cpe-card__title"><a href="../../rental/electric-boom-lifts/snorkel-ab38e/index.html">Snorkel AB38E</a></h3>
+      <div class="machine-type cpe-card__type">Electric Boom Lift · Electric</div>
     </div>
-    <div class="spec-mini">
+    <div class="spec-mini cpe-card__specs">
       <div><strong>13.5 m</strong>Working ht.</div>
       <div><strong>6.1 m</strong>Outreach</div>
       <div><strong>215 kg</strong>Capacity</div>
     </div>
-    <div class="machine-actions">
-      <a class="btn btn--ghost btn--sm" href="../../rental/electric-boom-lifts/snorkel-ab38e/index.html" style="justify-content:center">Details</a>
-      <a class="btn btn--red btn--sm" href="../../contact/index.html#enquiry" style="justify-content:center">Get a Quote</a>
+    <div class="machine-actions cpe-card__actions">
+      <a class="btn btn--ghost btn--sm cpe-card__action" href="../../rental/electric-boom-lifts/snorkel-ab38e/index.html">Details</a>
+      <a class="btn btn--red btn--sm cpe-card__action" href="../../contact/index.html#enquiry">Get a Quote</a>
     </div>
   </div>
-</article><article class="machine-card" data-item data-facets="height=15-18-m out=up-to-8-m brand=jlg avail=available" data-s-height="15.7" data-s-cap="227">
+</article><article class="machine-card cpe-card cpe-card--rental" data-cpe-item data-machine-type="electric-boom-lifts" data-machine-brand="jlg" data-model="JLG E450AJ" data-working-height="15.7" data-capacity="227" data-outreach="7.24" data-availability="available">
   <div class="card-top-badges"><span class="badge badge--ok">Available</span></div>
   <div class="media ratio-4-3"><img src="../../assets/img/r-e450aj-sm.webp" alt="JLG E450AJ electric boom lift for rent in Dubai" width="640" height="360" loading="lazy" decoding="async"></div>
-  <div class="machine-card-body">
+  <div class="machine-card-body cpe-card__body">
     <div>
-      <h3><a href="../../rental/electric-boom-lifts/jlg-e450aj/index.html">JLG E450AJ</a></h3>
-      <div class="machine-type">Electric Boom Lift · Electric</div>
+      <h3 class="cpe-card__title"><a href="../../rental/electric-boom-lifts/jlg-e450aj/index.html">JLG E450AJ</a></h3>
+      <div class="machine-type cpe-card__type">Electric Boom Lift · Electric</div>
     </div>
-    <div class="spec-mini">
+    <div class="spec-mini cpe-card__specs">
       <div><strong>15.7 m</strong>Working ht.</div>
       <div><strong>7.24 m</strong>Outreach</div>
       <div><strong>227 kg</strong>Capacity</div>
     </div>
-    <div class="machine-actions">
-      <a class="btn btn--ghost btn--sm" href="../../rental/electric-boom-lifts/jlg-e450aj/index.html" style="justify-content:center">Details</a>
-      <a class="btn btn--red btn--sm" href="../../contact/index.html#enquiry" style="justify-content:center">Get a Quote</a>
+    <div class="machine-actions cpe-card__actions">
+      <a class="btn btn--ghost btn--sm cpe-card__action" href="../../rental/electric-boom-lifts/jlg-e450aj/index.html">Details</a>
+      <a class="btn btn--red btn--sm cpe-card__action" href="../../contact/index.html#enquiry">Get a Quote</a>
     </div>
   </div>
-</article><article class="machine-card" data-item data-facets="height=18-m-and-above out=8-m-and-above brand=jlg avail=available" data-s-height="20.39" data-s-cap="230">
+</article><article class="machine-card cpe-card cpe-card--rental" data-cpe-item data-machine-type="electric-boom-lifts" data-machine-brand="jlg" data-model="JLG 600JP" data-working-height="20.39" data-capacity="230" data-outreach="13.54" data-availability="available">
   <div class="card-top-badges"><span class="badge badge--ok">Available</span></div>
   <div class="media ratio-4-3"><img src="../../assets/img/r-600jp-sm.webp" alt="JLG 600JP electric boom lift for rent in Dubai" width="640" height="480" loading="lazy" decoding="async"></div>
-  <div class="machine-card-body">
+  <div class="machine-card-body cpe-card__body">
     <div>
-      <h3><a href="../../rental/electric-boom-lifts/jlg-600jp/index.html">JLG 600JP</a></h3>
-      <div class="machine-type">Electric Boom Lift · Electric</div>
+      <h3 class="cpe-card__title"><a href="../../rental/electric-boom-lifts/jlg-600jp/index.html">JLG 600JP</a></h3>
+      <div class="machine-type cpe-card__type">Electric Boom Lift · Electric</div>
     </div>
-    <div class="spec-mini">
+    <div class="spec-mini cpe-card__specs">
       <div><strong>20.39 m</strong>Working ht.</div>
       <div><strong>13.54 m</strong>Outreach</div>
       <div><strong>230 kg</strong>Capacity</div>
     </div>
-    <div class="machine-actions">
-      <a class="btn btn--ghost btn--sm" href="../../rental/electric-boom-lifts/jlg-600jp/index.html" style="justify-content:center">Details</a>
-      <a class="btn btn--red btn--sm" href="../../contact/index.html#enquiry" style="justify-content:center">Get a Quote</a>
+    <div class="machine-actions cpe-card__actions">
+      <a class="btn btn--ghost btn--sm cpe-card__action" href="../../rental/electric-boom-lifts/jlg-600jp/index.html">Details</a>
+      <a class="btn btn--red btn--sm cpe-card__action" href="../../contact/index.html#enquiry">Get a Quote</a>
     </div>
   </div>
 </article>
+        </div>
+        <div class="empty-state cpe-listing-empty" data-cpe-empty hidden data-title="No machines match these filters" data-title-term="No {term} in our rental fleet right now" data-wa="Hi Cherry Pickers, I&#x27;d like a rental quote." data-wa-term="Hi Cherry Pickers, I&#x27;d like to rent a {term}. Is one available?">
+    <h3 class="cpe-listing-empty__title" data-cpe-empty-title>No machines match these filters</h3>
+    <p class="cpe-listing-empty__text">Tell us the working height and the job, and we'll suggest the right machine.</p>
+    <div class="cpe-listing-empty__actions">
+      <a class="btn btn--red" href="../../contact/index.html?need=rent#enquiry" data-cpe-empty-quote>Tell us your spec</a>
+      <a class="btn btn--wa" href="https://wa.me/971561018428?text=Hi%20Cherry%20Pickers%2C%20I%27d%20like%20a%20rental%20quote." data-cpe-empty-wa><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7a2.8 2.8 0 0 0 1.8-1.3 2.3 2.3 0 0 0 .2-1.3c-.1-.1-.2-.2-.4-.3z"/></svg> WhatsApp</a>
+      <button type="button" class="btn btn--ghost" data-cpe-clear-filters hidden>Clear filters</button>
+    </div>
+    <p class="cpe-listing-empty__try"><span>Try:</span> <button type="button" class="chip" data-cpe-try="AB38E">AB38E</button><button type="button" class="chip" data-cpe-try="600JP">600JP</button><button type="button" class="chip" data-cpe-try="JLG">JLG</button></p>
+  </div>
+        <div class="cpe-listing-results__pager" data-cpe-pager></div>
       </div>
-      <div class="empty-state" data-empty hidden><strong>No machines match these filters.</strong><br><a href="#" data-clear>Clear filters</a> or <a href="../../contact/index.html#enquiry">ask us to source one</a>.</div>
+        <p class="sr-only" aria-live="polite" data-cpe-announce></p>
+        
+      </div>
     </div>
   </div>
 </section>
@@ -291,5 +314,6 @@
   <a class="quote" href="../../contact/index.html#enquiry"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>Get a Quote</a>
 </nav>
 <script src="../../assets/js/main.js" defer></script>
+<script src="../../assets/js/listing.js" defer></script>
 </body>
 </html>

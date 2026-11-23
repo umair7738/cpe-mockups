@@ -19,7 +19,7 @@
       <div class="ff"><label for="qWant">What are you looking for?</label>
         <select id="qWant"><option value="rent">Rent a machine</option><option value="buy">Buy a used machine</option></select></div>
       <div class="ff"><label for="qCat">Category</label>
-        <select id="qCat" name="category">
+        <select id="qCat" name="m_type">
           <option value="">All categories</option>
           <option value="electric-scissor-lifts">Electric Scissor Lifts</option>
           <option value="rough-terrain-scissor-lifts">Rough Terrain Scissor Lifts</option>
@@ -28,7 +28,7 @@
           <option value="telescopic-boom-lifts">Telescopic Boom Lifts</option>
         </select></div>
       <div class="ff"><label for="qHt">Working height</label>
-        <select id="qHt" name="height"><option value="">Any height</option><option value="0-12">Up to 12 m</option><option value="12-20">12 – 20 m</option><option value="20-30">20 – 30 m</option><option value="30-45">30 m +</option></select></div>
+        <select id="qHt" name="m_height"><option value="">Any height</option><option value="0-12">Up to 12 m</option><option value="12-20">12 – 20 m</option><option value="20-30">20 – 30 m</option><option value="30-45">30 m +</option></select></div>
       <button class="btn btn-red" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Find Machines</button>
     </form>
     <div class="hero-cta">
@@ -104,10 +104,10 @@
   <div class="wrap">
     <div class="sec-head"><div><span class="eyebrow">Ready to hire</span><h2 class="h2">Fast-Moving Rental Machines</h2></div><a class="link-arrow" href="rental.html#all-machines">All 30 rental machines →</a></div>
     <div class="m-row">
-      {{hrcard:gs3246}}
-      {{hrcard:gs4390}}
-      {{hrcard:450aj}}
-      {{hrcard:s65}}
+      {{hrcard:rental:genie-gs-3246}}
+      {{hrcard:rental:genie-gs-4390-rt}}
+      {{hrcard:rental:jlg-450aj}}
+      {{hrcard:rental:genie-s-65}}
     </div>
   </div>
 </section>
@@ -148,10 +148,10 @@
     </div>
     <div class="tab-pane" id="tab-used" role="tabpanel" aria-labelledby="tabbtn-used">
       <div class="m-row">
-      {{hscard:a13}}
-      {{hscard:a4}}
-      {{hscard:a1}}
-      {{hscard:a8}}
+      {{hscard:used:2010-jlg-600aj}}
+      {{hscard:used:2018-jlg-e450aj}}
+      {{hscard:used:2011-jlg-860sj}}
+      {{hscard:used:2009-jlg-1350sjp}}
       </div>
       <p class="more-link"><a class="link-arrow" href="sales-used.html">View all used equipment →</a></p>
       <div class="ship">

@@ -9,150 +9,19 @@
     });
   }
 
-  // Filter drawer (mobile)
-  var filters = document.querySelector('.filters');
-  document.querySelectorAll('[data-filter-open]').forEach(function (b) {
-    b.addEventListener('click', function () { filters && filters.classList.add('open'); });
-  });
-  document.querySelectorAll('[data-filter-close], [data-filter-dismiss]').forEach(function (b) {
-    b.addEventListener('click', function () { filters && filters.classList.remove('open'); });
-  });
+  // Machine listings (filters, search, sort, pagination, filter drawer) live in listing.js.
 
-  // ---------- Listing filters: live results + live counts (OR inside a group, AND across groups) ----------
-  var listing = document.querySelector('[data-listing]');
-  if (listing) {
-    var items = Array.prototype.slice.call(listing.querySelectorAll('[data-item]'));
-    var facets = items.map(function (el) {
-      var f = {};
-      (el.getAttribute('data-facets') || '').split(' ').forEach(function (p) {
-        if (!p) return; var i = p.indexOf('='); f[p.slice(0, i)] = p.slice(i + 1);
-      });
-      return f;
-    });
-    var inputs = Array.prototype.slice.call(document.querySelectorAll('.filters input[type=checkbox][name]'));
-    var countEl = document.querySelector('[data-result-count]');
-    var showBtns = document.querySelectorAll('[data-filter-close]');
-    var empty = document.querySelector('[data-empty]');
-    var more = document.querySelector('[data-more]');
-    var chips = document.querySelector('[data-active-chips]');
-    var sortSel = document.querySelector('[data-sort]');
-    var size = parseInt(listing.getAttribute('data-page-size'), 10) || 9999;
-    var noun = listing.getAttribute('data-noun') || 'machines';
-    var limit = size;
-
-    var selected = function () {
-      var s = {};
-      inputs.forEach(function (i) { if (i.checked) (s[i.name] = s[i.name] || []).push(i.value); });
-      return s;
-    };
-    var match = function (f, s, skip) {
-      for (var k in s) { if (k !== skip && s[k].indexOf(f[k]) < 0) return false; }
-      return true;
-    };
-
-    // Presets from the URL query, set by the home page machine finder:
-    //   ?category=<category-slug>   ticks the matching "Machine type" box (or filters by it if the page has no such box)
-    //   ?height=<min-max>           metres; shows machines with min <= working height < max
-    var params = new URLSearchParams(location.search);
-    var pre = { cat: null, hmin: null, hmax: null };
-    var qCat = (params.get('category') || '').toLowerCase();
-    if (/^[a-z0-9-]+$/.test(qCat)) {
-      var box = inputs.filter(function (i) { return i.name === 'category' && i.value === qCat; })[0];
-      if (box) box.checked = true; else pre.cat = qCat;
+  // Contact form: prefill from ?machine=<model>&need=buy|rent (links from the listing "no results" block)
+  (function () {
+    var p = new URLSearchParams(location.search), machine = (p.get('machine') || '').trim();
+    var msg = document.querySelector('form [name=message]'), need = document.querySelector('form [name=need]');
+    if (!machine || !msg) return;
+    if (!msg.value) msg.value = 'Looking for: ' + machine;
+    if (need) {
+      var want = p.get('need') === 'rent' ? 'Rental' : 'To buy a machine';
+      Array.prototype.forEach.call(need.options, function (o) { if (o.text === want) need.value = o.value; });
     }
-    var qHt = (params.get('height') || '').match(/^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/);
-    if (qHt && parseFloat(qHt[1]) < parseFloat(qHt[2])) { pre.hmin = parseFloat(qHt[1]); pre.hmax = parseFloat(qHt[2]); }
-    var preOk = function (el, f) {
-      if (pre.cat !== null && f.category !== pre.cat) return false;
-      if (pre.hmin !== null) {
-        var h = parseFloat(el.getAttribute('data-s-height'));
-        if (!(h >= pre.hmin && h < pre.hmax)) return false;
-      }
-      return true;
-    };
-    var syncUrl = function () {  // drop removed presets from the address bar so a reload doesn't bring them back
-      if (!window.history.replaceState) return;
-      var p = new URLSearchParams(location.search);
-      if (pre.hmin === null) p.delete('height');
-      if (pre.cat === null && !inputs.some(function (i) { return i.name === 'category' && i.checked; })) p.delete('category');
-      var q = p.toString();
-      history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
-    };
-    var addChip = function (label, onRemove) {
-      var b = document.createElement('button');
-      b.type = 'button'; b.className = 'chip chip--active';
-      b.textContent = label + '  ×';
-      b.setAttribute('aria-label', 'Remove filter: ' + label);
-      b.addEventListener('click', function () { onRemove(); syncUrl(); apply(true); });
-      chips.appendChild(b);
-    };
-
-    var apply = function (reset) {
-      if (reset) limit = size;
-      var s = selected();
-      var vis = items.filter(function (el, i) { return preOk(el, facets[i]) && match(facets[i], s); });
-      if (sortSel) {
-        var parts = sortSel.value.split('-'), key = 's' + parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-        vis.sort(function (a, b) {
-          var x = parseFloat(a.dataset[key]) || 0, y = parseFloat(b.dataset[key]) || 0;
-          return parts[1] === 'desc' ? y - x : x - y;
-        });
-        vis.forEach(function (el) { el.parentNode.appendChild(el); });
-      }
-      items.forEach(function (el) { el.hidden = true; });
-      vis.forEach(function (el, i) { el.hidden = i >= limit; });
-      inputs.forEach(function (inp) {
-        var n = facets.filter(function (f, j) { return preOk(items[j], f) && match(f, s, inp.name) && f[inp.name] === inp.value; }).length;
-        var c = inp.parentNode.querySelector('.count'); if (c) c.textContent = n;
-        inp.parentNode.classList.toggle('is-zero', n === 0 && !inp.checked);
-      });
-      if (countEl) countEl.textContent = vis.length;
-      showBtns.forEach(function (b) { b.textContent = 'Show ' + vis.length + ' ' + noun; });
-      if (empty) empty.hidden = vis.length > 0;
-      if (more) more.hidden = vis.length <= limit;
-      if (chips) {
-        chips.innerHTML = '';
-        if (pre.cat !== null) {
-          var cn = pre.cat.replace(/-/g, ' ');
-          addChip('Machine type: ' + cn.charAt(0).toUpperCase() + cn.slice(1), function () { pre.cat = null; });
-        }
-        if (pre.hmin !== null) {
-          addChip('Working height: ' + (pre.hmin === 0 ? 'up to ' + pre.hmax : pre.hmin + ' – ' + pre.hmax) + ' m',
-            function () { pre.hmin = pre.hmax = null; });
-        }
-        inputs.filter(function (i) { return i.checked; }).forEach(function (i) {
-          addChip(i.parentNode.getAttribute('data-label'), function () { i.checked = false; });
-        });
-      }
-    };
-    inputs.forEach(function (i) { i.addEventListener('change', function () { apply(true); syncUrl(); }); });
-    if (sortSel) sortSel.addEventListener('change', function () { apply(false); });
-    if (more) more.addEventListener('click', function () { limit += size; apply(false); });
-    document.querySelectorAll('[data-clear]').forEach(function (a) {
-      a.addEventListener('click', function (e) {
-        e.preventDefault();
-        inputs.forEach(function (i) { i.checked = false; });
-        pre.cat = pre.hmin = pre.hmax = null;
-        syncUrl(); apply(true);
-      });
-    });
-    // Preset from link, e.g. #category-telescopic-boom-lifts (from the Sales category cards);
-    // commas tick several boxes, e.g. #category-electric-scissor-lifts,rough-terrain-scissor-lifts
-    var presetFromHash = function () {
-      var h = decodeURIComponent((location.hash || '').slice(1)), d = h.indexOf('-');
-      if (d < 1) return;
-      var key = h.slice(0, d), vals = h.slice(d + 1).split(',');
-      inputs.forEach(function (i) { if (i.name === key && vals.indexOf(i.value) >= 0) i.checked = true; });
-    };
-    presetFromHash();
-    window.addEventListener('hashchange', function () { inputs.forEach(function (i) { i.checked = false; }); presetFromHash(); apply(true); });
-    apply(true);
-    // Arriving from the finder: bring the filtered list into view (below the sticky header)
-    if (params.has('category') || params.has('height')) {
-      var sec = listing.closest('section') || listing;
-      window.scrollTo(0, Math.max(0, sec.getBoundingClientRect().top + window.pageYOffset - 84));
-    }
-  }
+  })();
 
   // ---------- Blog: filter by category (dropdown) + sort ----------
   var posts = document.querySelector('[data-blog-posts]');
@@ -306,7 +175,7 @@
     });
   })();
 
-  // ---------- Machine finder: rent -> rental/, buy -> sales/used/ with ?category=&height= ----------
+  // ---------- Machine finder: rent -> rental/, buy -> sales/used/ with ?m_type=&m_height= ----------
   (function () {
     var finder = document.getElementById('finder');
     if (!finder) return;
@@ -332,11 +201,12 @@
     };
     qC.addEventListener('change', fillHt);
     fillHt();
+    // Listing params (see WORDPRESS-MAP.md): m_type = machine_type slug, m_height = 'min-max' working height in metres
     finder.addEventListener('submit', function (e) {
       e.preventDefault();
       var base = finder.getAttribute(qW.value === 'buy' ? 'data-buy' : 'data-rent'), p = [];
-      if (qC.value) p.push('category=' + encodeURIComponent(qC.value));
-      if (qH.value) p.push('height=' + encodeURIComponent(qH.value));
+      if (qC.value) p.push('m_type=' + encodeURIComponent(qC.value));
+      if (qH.value) p.push('m_height=' + encodeURIComponent(qH.value));
       window.location.href = base + (p.length ? '?' + p.join('&') : '');
     });
   })();
