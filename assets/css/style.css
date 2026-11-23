@@ -1222,17 +1222,21 @@ tbody tr:nth-child(even) { background: #fafbfd; }
 .about-services { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 24px; align-items: stretch; }
 .about-services .service-block .link-arrow { display: block; margin-top: 6px; }
 .about-services > * { transition: background-color .25s, border-color .25s, box-shadow .2s, transform .2s; }
-.about-services h3, .about-services p, .about-services .tick-list, .about-services .tick-list li, .about-services .link-arrow, .about-services .eyebrow { transition: color .25s; }
+.about-services h2, .about-services h3, .about-services p, .about-services .tick-list, .about-services .tick-list li, .about-services .link-arrow, .about-services .eyebrow, .about-services .icon { transition: color .25s, background-color .25s; }
 .about-services > *:hover { box-shadow: var(--shadow); transform: translateY(-4px); }
 .about-main .eyebrow { color: var(--red); margin-bottom: 0; }
-/* Navy card: starts on "Main service", then moves to the last card hovered or focused and stays there (main.js) */
-.about-services > .is-active { background: var(--navy); border-color: var(--navy); }
-.about-services > .is-active h3 { color: #fff; }
-.about-services > .is-active p { color: #d7deef; }
-.about-services > .is-active .tick-list,
-.about-services > .is-active .tick-list li { color: #dfe5f3; }
-.about-services > .is-active .link-arrow,
-.about-services > .is-active .eyebrow { color: #ff5a45; }
+/* All cards start white with matching text colours (same as the service cards) */
+.about-main p, .about-main .tick-list li { color: #4a5266; }
+/* Navy only while a card is hovered, keyboard-focused, or tapped on touch screens (.is-active, main.js) */
+.about-services > :is(:hover, :focus-within, .is-active) { background: var(--navy); border-color: var(--navy); }
+.about-services > :is(:hover, :focus-within, .is-active) :is(h2, h3) { color: #fff; }
+.about-services > :is(:hover, :focus-within, .is-active) p { color: #d7deef; }
+.about-services > :is(:hover, :focus-within, .is-active) .tick-list,
+.about-services > :is(:hover, :focus-within, .is-active) .tick-list li { color: #dfe5f3; }
+.about-services > :is(:hover, :focus-within, .is-active) .link-arrow,
+.about-services > :is(:hover, :focus-within, .is-active) .eyebrow { color: #ff5a45; }
+.about-services > :is(:hover, :focus-within, .is-active) .icon { background: rgba(255,255,255,.1); color: #ff5a45; }
+.about-services .link-arrow:focus-visible, .about-services .btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .about-services .service-block p { flex: 0 1 auto; }
 .about-services .service-block .tick-list { flex: 1; margin: 4px 0 0; font-size: .92rem; color: #4a5266; }
 .about-services .service-block .tick-list li { padding: 3px 0 3px 28px; }
@@ -1240,10 +1244,19 @@ tbody tr:nth-child(even) { background: #fafbfd; }
 @media (prefers-reduced-motion: reduce) { .about-services > *:hover { transform: none; } }
 @media (max-width: 1180px) { .about-services { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 900px) { .about-services { grid-template-columns: 1fr; } }
-/* Section label (eyebrow) on the left, "More about … →" link on the right of the same line */
+/* Section label (eyebrow) that is itself the link to the related page, with a ↗ arrow */
 .eyebrow-row { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 16px; flex-wrap: wrap; margin-bottom: 8px; }
 .eyebrow-row .eyebrow { margin-bottom: 0; }
 .eyebrow-row .link-arrow { font-size: .95rem; margin-left: auto; }
+.eyebrow-link { position: relative; text-decoration: none; text-underline-offset: 4px; text-decoration-thickness: 2px; border-radius: 3px; -webkit-tap-highlight-color: transparent; transition: color .2s; }
+/* Larger invisible tap area (≈44px tall) without changing the label's size or spacing */
+.eyebrow-link::after { content: ""; position: absolute; inset: -12px -8px; }
+.eyebrow-arrow { display: inline-block; margin-left: .35em; letter-spacing: 0; transition: transform .2s; }
+.eyebrow-link:hover { color: var(--red-dark); text-decoration: underline; }
+.eyebrow-link:hover .eyebrow-arrow, .eyebrow-link:focus-visible .eyebrow-arrow { transform: translate(2px, -2px); }
+.eyebrow-link:focus { outline: none; }
+.eyebrow-link:focus-visible { outline: 2px solid var(--navy); outline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .eyebrow-link:hover .eyebrow-arrow, .eyebrow-link:focus-visible .eyebrow-arrow { transform: none; } }
 /* About: one wide team group photo */
 .team-photo { margin: 0; }
 .team-photo .ph { background-size: 16%, cover; }

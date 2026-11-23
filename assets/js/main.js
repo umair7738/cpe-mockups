@@ -54,12 +54,16 @@
     });
   });
 
-  // About > What we do: the navy highlight moves to the last card hovered / focused / tapped and stays there
+  // About > What we do: cards are white; navy shows on hover / keyboard focus (CSS).
+  // On touch screens there is no hover, so a tap highlights that card until another card or the page is tapped.
   document.querySelectorAll('.about-services').forEach(function (grid) {
     var cards = Array.prototype.slice.call(grid.children);
     var activate = function (card) { cards.forEach(function (c) { c.classList.toggle('is-active', c === card); }); };
-    cards.forEach(function (c) {
-      ['mouseenter', 'focusin', 'click'].forEach(function (ev) { c.addEventListener(ev, function () { activate(c); }); });
+    document.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse') return;
+      var card = null;
+      cards.forEach(function (c) { if (c.contains(e.target)) card = c; });
+      activate(card);
     });
   });
 
