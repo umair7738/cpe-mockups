@@ -1,0 +1,285 @@
+<!-- HOME PAGE v3 (mobile-first). Styles: assets/css/home.css · scripts: assets/js/main.js
+     Header, footer, bottom bar and lightbox come from header_home() / footer_home() in build.py. -->
+
+<!-- 1. HERO + MACHINE FINDER
+     Phone: image strip -> headline -> finder -> buttons -> rating. Tablet+: full-bleed photo, finder overlaps the bottom edge.
+     Each <picture> downloads only the photo for its screen size (the other one gets a 1px placeholder). -->
+<section class="hero">
+  <div class="hero-media">
+    <picture class="hm-d"><source media="(min-width: 768px)" srcset="assets/img/hero-jlg-860sj.webp"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="JLG 860SJ telescopic boom lift working on a steel structure" {{imgsize:hero-jlg-860sj}} fetchpriority="high" decoding="async"></picture>
+    <picture class="hm-m"><source media="(min-width: 768px)" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"><img src="assets/img/r-450aj-sm.webp" alt="JLG articulated boom lift for rent in Dubai" {{imgsize:r-450aj-sm}} fetchpriority="high" decoding="async"></picture>
+  </div>
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow"><span class="eb-m">Access equipment partner · UAE</span><span class="eb-d">Cherry Pickers Equipment · Your access equipment partner in the UAE</span></span>
+      <h1>Boom Lift &amp; Scissor Lift Rental<br class="br-d"> in <em>Dubai &amp; UAE</em></h1>
+      <p class="sub">Safety first at every height. 30 machines from 7.8 m to 43 m, delivered across all seven emirates.</p>
+    </div>
+    <form class="finder-in finder" id="finder" action="rental/index.html" method="get" data-rent="rental/index.html" data-buy="sales/used/index.html" aria-label="Find a machine">
+      <div class="ff"><label for="qWant">What are you looking for?</label>
+        <select id="qWant"><option value="rent">Rent a machine</option><option value="buy">Buy a used machine</option></select></div>
+      <div class="ff"><label for="qCat">Category</label>
+        <select id="qCat" name="category">
+          <option value="">All categories</option>
+          <option value="electric-scissor-lifts">Electric Scissor Lifts</option>
+          <option value="rough-terrain-scissor-lifts">Rough Terrain Scissor Lifts</option>
+          <option value="electric-boom-lifts">Electric Boom Lifts</option>
+          <option value="articulated-boom-lifts">Articulated Boom Lifts</option>
+          <option value="telescopic-boom-lifts">Telescopic Boom Lifts</option>
+        </select></div>
+      <div class="ff"><label for="qHt">Working height</label>
+        <select id="qHt" name="height"><option value="">Any height</option><option value="0-12">Up to 12 m</option><option value="12-20">12 – 20 m</option><option value="20-30">20 – 30 m</option><option value="30-45">30 m +</option></select></div>
+      <button class="btn btn-red" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Find Machines</button>
+    </form>
+    <div class="hero-cta">
+      <div class="hero-btns">
+        <a class="btn btn-red" href="#enquiry" data-want="rent">Get a Quote</a>
+        <a class="btn btn-wa" href="{{wa:Hi, I need a boom lift or scissor lift for my project.}}" target="_blank" rel="noopener">{{icon:wa}} WhatsApp Us</a>
+      </div>
+      <!-- TODO: sample rating – replace 4.9 / 52 reviews with the real Google Business Profile figures before launch -->
+      <div class="rating"><span class="stars" aria-hidden="true">★★★★★</span> <span>4.9 on Google · 52 reviews</span></div>
+    </div>
+  </div>
+</section>
+<div class="brands-wrap"><div class="wrap">
+  <div class="brands"><span>Brands we rent &amp; sell</span><b>JLG</b><b>Genie</b><b>Haulotte</b><b>Snorkel</b><b>Nifty</b><b>Dingli</b><b>Sinoboom</b></div>
+</div></div>
+
+<!-- 2. OUR SERVICES: two separate legal entities – Rental + Maintenance vs Sales. Never merge them. -->
+<section class="sec" id="services">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow">Our services</span><h2 class="h2">Rent, Buy or Maintain Access Equipment</h2><p class="lead">One team for the whole life of a machine – from a one-day hire to a long-term maintenance contract.</p></div></div>
+    <div class="svc-grid">
+      <article class="svc">
+        <div class="svc-img">{{img:r-450aj-sm|JLG articulated boom lift on rent}}<span class="svc-tag">Rental</span></div>
+        <div class="svc-body">
+          <h3>Equipment Rental</h3>
+          <p>Scissor lifts and boom lifts for any job at height, delivered to your site anywhere in the UAE.</p>
+          <ul class="ticks"><li>{{tick}}Daily, weekly, monthly &amp; long-term</li><li>{{tick}}All 7 emirates</li><li>{{tick}}Operators on request</li></ul>
+          <a class="btn btn-red btn-sm" href="rental.html">See rental machines →</a>
+          <div class="entity">Cherry Pickers Equipment Rentals &amp; Maintenance LLC</div>
+        </div>
+      </article>
+      <article class="svc">
+        <div class="svc-img">{{img:ship-container-loading|Our team loading a JLG boom lift into a container for export||object-position:center 60%}}<span class="svc-tag">Sales</span></div>
+        <div class="svc-body">
+          <h3>Equipment Sales</h3>
+          <p>Used and new access equipment for buyers in the UAE and overseas, with full details for every machine.</p>
+          <ul class="ticks"><li>{{tick}}Used machines with year, hours &amp; photos</li><li>{{tick}}New equipment</li><li>{{tick}}Export to international buyers</li></ul>
+          <a class="btn btn-navy btn-sm" href="sales.html">Machines for sale →</a>
+          <div class="entity">Cherry Pickers Equipment LLC</div>
+        </div>
+      </article>
+      <article class="svc">
+        <div class="svc-img">{{img:svc-technician|Cherry Pickers technician with a JLG boom lift||object-position:center 35%}}<span class="svc-tag">Maintenance</span></div>
+        <div class="svc-body">
+          <h3>Maintenance &amp; Repair</h3>
+          <p>Keep boom lifts and scissor lifts running – including machines you own.</p>
+          <ul class="ticks"><li>{{tick}}AMC (annual maintenance contracts)</li><li>{{tick}}On-site repairs</li><li>{{tick}}Workshop services</li></ul>
+          <a class="btn btn-out btn-sm" href="#enquiry" data-want="service">Book a service →</a>
+          <div class="entity">Cherry Pickers Equipment Rentals &amp; Maintenance LLC</div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- 3. RENTAL FLEET: the 5 category pages. "Not sure?" tile shows below 1101px only. -->
+<section class="sec gray" id="fleet">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow">Our rental fleet</span><h2 class="h2">Access Equipment for Rent in Dubai &amp; UAE</h2><p class="lead">Choose by machine type and working height.</p></div><a class="link-arrow" href="rental.html#all-machines">View all 30 machines →</a></div>
+    <div class="cat-grid">
+      <a class="cat" href="rental-electric-scissor-lifts.html"><div class="cat-img">{{img:cat-electric-scissor-sm|Electric scissor lift rental in Dubai}}</div><div class="cat-body"><h3>Electric Scissor Lifts</h3><span class="badge-h">7.8 – 15.7 m</span><p>Quiet, zero-emission. Indoor fit-out, warehouses, malls.</p></div></a>
+      <a class="cat" href="rental-rough-terrain-scissor-lifts.html"><div class="cat-img">{{img:cat-rt-scissor-sm|Rough terrain scissor lift rental in Dubai}}</div><div class="cat-body"><h3>Rough Terrain Scissor Lifts</h3><span class="badge-h">15.1 – 18.2 m</span><p>Big platforms for outdoor sites and uneven ground.</p></div></a>
+      <a class="cat" href="rental-electric-boom-lifts.html"><div class="cat-img">{{img:cat-electric-boom-sm|Electric boom lift rental in Dubai}}</div><div class="cat-body"><h3>Electric Boom Lifts</h3><span class="badge-h">13.5 – 20.4 m</span><p>Reach up and over, indoors or in noise-sensitive areas.</p></div></a>
+      <a class="cat" href="rental-articulated-boom-lifts.html"><div class="cat-img">{{img:cat-articulated-sm|Articulated boom lift rental in Dubai}}</div><div class="cat-body"><h3>Articulated Boom Lifts</h3><span class="badge-h">15.7 – 43.2 m</span><p>Bend around obstacles to reach tight spots.</p></div></a>
+      <a class="cat" href="rental-telescopic-boom-lifts.html"><div class="cat-img">{{img:cat-telescopic-sm|Telescopic boom lift rental in Dubai}}</div><div class="cat-body"><h3>Telescopic Boom Lifts</h3><span class="badge-h">15.7 – 28.2 m</span><p>Maximum straight reach for facades and steel work.</p></div></a>
+      <a class="cat cat-ask" href="{{wa:Hi, I'm not sure which machine I need. Can you advise?}}" target="_blank" rel="noopener">{{icon:wa}}<div><h3>Not sure?</h3><p>Send a site photo on WhatsApp – we'll suggest the machine.</p></div></a>
+    </div>
+  </div>
+</section>
+
+<!-- 4. FAST-MOVING RENTAL MACHINES: cards built from the fleet data (R) in build.py; each links to its own page -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow">Ready to hire</span><h2 class="h2">Fast-Moving Rental Machines</h2></div><a class="link-arrow" href="rental.html#all-machines">All 30 rental machines →</a></div>
+    <div class="m-row">
+      {{hrcard:gs3246}}
+      {{hrcard:gs4390}}
+      {{hrcard:450aj}}
+      {{hrcard:s65}}
+    </div>
+  </div>
+</section>
+
+<!-- 5. PROJECTS: swipe on phones, arrows from 768px, tap opens the lightbox -->
+<section class="sec proj">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="eyebrow">On site</span><h2 class="h2">Our Machines at UAE Projects</h2><p class="lead">Boom lifts and scissor lifts at work – from fit-outs to steel structures.</p></div>
+      <div class="s-nav"><button type="button" id="sPrev" aria-label="Previous photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" id="sNext" aria-label="Next photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>
+    </div>
+    <!-- TODO: sample captions from the v3 design – confirm each project, location and height before launch -->
+    <div class="slider"><div class="track" id="track">
+      <figure class="slide" tabindex="0" role="button" aria-label="Enlarge photo: JLG 860SJ telescopic boom">{{img:proj-jlg-860sj|JLG 860SJ telescopic boom working on a UAE project}}<figcaption class="cap"><b>JLG 860SJ telescopic boom</b><span>Steel structure works · 28 m working height</span></figcaption></figure>
+      <figure class="slide" tabindex="0" role="button" aria-label="Enlarge photo: Genie S-45 telescopic boom">{{img:proj-genie-s45|Genie S-45 telescopic boom working on a UAE project}}<figcaption class="cap"><b>Genie S-45 telescopic boom</b><span>Steel roof framing · Two-person platform</span></figcaption></figure>
+      <figure class="slide" tabindex="0" role="button" aria-label="Enlarge photo: JLG articulated boom">{{img:cat-articulated|JLG articulated boom working on a UAE project}}<figcaption class="cap"><b>JLG articulated boom</b><span>Construction site access · Up-and-over reach</span></figcaption></figure>
+      <figure class="slide" tabindex="0" role="button" aria-label="Enlarge photo: Rough terrain scissor lift">{{img:cat-rt-scissor-sm|Rough terrain scissor lift working on a UAE project}}<figcaption class="cap"><b>Rough terrain scissor lift</b><span>Outdoor building works · Large platform</span></figcaption></figure>
+      <figure class="slide" tabindex="0" role="button" aria-label="Enlarge photo: Telescopic boom lift">{{img:cat-telescopic-sm|Telescopic boom lift working on a UAE project}}<figcaption class="cap"><b>Telescopic boom lift</b><span>Facade installation · Straight-line reach</span></figcaption></figure>
+      <figure class="slide" tabindex="0" role="button" aria-label="Enlarge photo: Electric boom lift">{{img:cat-electric-boom-sm|Electric boom lift working on a UAE project}}<figcaption class="cap"><b>Electric boom lift</b><span>Indoor maintenance · Zero emission</span></figcaption></figure>
+      <figure class="slide" tabindex="0" role="button" aria-label="Enlarge photo: Genie GS-3246 scissor lift">{{img:r-gs3246-sm|Genie GS-3246 scissor lift working on a UAE project}}<figcaption class="cap"><b>Genie GS-3246 scissor lift</b><span>Fit-out &amp; ceiling works · 11.75 m</span></figcaption></figure>
+      <figure class="slide" tabindex="0" role="button" aria-label="Enlarge photo: Genie boom lift">{{img:proj-genie-delivery|Genie boom lift working on a UAE project}}<figcaption class="cap"><b>Genie boom lift</b><span>Delivery to site · Low-bed transport</span></figcaption></figure>
+    </div></div>
+    <div class="proj-cta">
+      <div><h3>Need this for your project?</h3><p>Tell us the height and the site – we'll suggest the right machine.</p></div>
+      <div><a class="btn btn-wa" href="{{wa:Hi, I saw your project photos. I need a machine for my site.}}" target="_blank" rel="noopener">{{icon:wa}} WhatsApp Us</a><a class="btn btn-red" href="#enquiry" data-want="rent">Get a Quote</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. HIGH-DEMAND USED EQUIPMENT (Cherry Pickers Equipment LLC): Used | New tabs + export shipments -->
+<section class="sec gray" id="sales">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><span class="eyebrow">Equipment sales</span><h2 class="h2">High-Demand Used Equipment</h2><p class="lead">Sourced from 27+ countries including the USA, Germany, the Netherlands and Australia – inspected, serviced and shipped worldwide. 750+ machines delivered to India and 100+ to Vietnam.</p></div>
+      <div class="tabs" role="tablist" aria-label="Equipment for sale">
+        <button type="button" class="on" role="tab" id="tabbtn-used" aria-selected="true" aria-controls="tab-used" data-tab="used">Used</button><button type="button" role="tab" id="tabbtn-new" aria-selected="false" aria-controls="tab-new" data-tab="new" tabindex="-1">New</button>
+      </div>
+    </div>
+    <div class="tab-pane" id="tab-used" role="tabpanel" aria-labelledby="tabbtn-used">
+      <div class="m-row">
+      {{hscard:a13}}
+      {{hscard:a4}}
+      {{hscard:a1}}
+      {{hscard:a8}}
+      </div>
+      <p class="more-link"><a class="link-arrow" href="sales-used.html">View all used equipment →</a></p>
+      <div class="ship">
+        <div class="ship-head"><h3>Recent Export Shipments</h3><p>Every machine is packed, strapped and documented by our team before it leaves.</p></div>
+        <div class="ship-grid">
+          <figure>{{img:ship-container-loading|JLG boom lift being loaded into a 40 ft container}}<figcaption>JLG boom lift · container loading</figcaption></figure>
+          <figure>{{img:ship-jlg-150hax|JLG 150HAX boom lift prepared for export}}<figcaption>JLG 150HAX · export packing</figcaption></figure>
+          <figure>{{img:ship-genie-gs2646|Genie GS-2646 scissor lift loaded in a container}}<figcaption>Genie GS-2646 · loaded &amp; secured</figcaption></figure>
+          <figure>{{img:ship-genie-gs1930|Genie GS-1930 and GS-2632 scissor lifts in a container}}<figcaption>Genie GS-1930 / GS-2632 · ready to ship</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane" id="tab-new" role="tabpanel" aria-labelledby="tabbtn-new" hidden>
+      <div class="empty">
+        <h3>New Equipment on Request</h3>
+        <p>Brand-new boom lifts and scissor lifts supplied on request. Tell us the machine you need and we'll send price and delivery time.</p>
+        <div class="empty-btns"><a class="btn btn-navy" href="#enquiry" data-want="buy">Enquire to Buy</a><a class="btn btn-out" href="sales-new.html">New equipment →</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. INDUSTRIES -->
+<section class="ind">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow">Industries we serve</span><h2 class="h2">Trusted for Safe Work at Height</h2></div></div>
+    <div class="ind-grid">
+      <div class="ind-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 20h20M4 20V9l6-4v15M10 20V5l10 5v10M14 12h2M14 16h2"/></svg><b>Construction &amp; Contracting</b><span>Boom &amp; RT scissor lifts</span></div>
+      <div class="ind-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M8 15h2M14 15h2M10 21v-3h4v3"/></svg><b>Facility Management</b><span>Electric scissor lifts</span></div>
+      <div class="ind-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 16l20-6-2-3-6 2-5-5-2 1 3 6-5 2-2-2-2 1z"/><path d="M3 21h18"/></svg><b>Malls &amp; Airports</b><span>Electric scissor &amp; boom lifts</span></div>
+      <div class="ind-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 21V9l9-5 9 5v12"/><path d="M7 21v-8h10v8M7 17h10"/></svg><b>Warehousing &amp; Logistics</b><span>Electric scissor lifts</span></div>
+      <div class="ind-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 21V10l4-2v13M8 21V6l4-3v18M12 21h9V11l-9-3"/><path d="M15 14h3M15 17h3"/></svg><b>Oil, Gas &amp; Industrial</b><span>Diesel boom lifts</span></div>
+      <div class="ind-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 20l3-14 6 4 6-4 3 14z"/><path d="M12 10v10"/></svg><b>Events &amp; Exhibitions</b><span>Electric boom lifts</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. GOOGLE REVIEWS -->
+<section class="sec gray">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow">Google reviews</span><h2 class="h2">What Our Customers Say</h2></div></div>
+    <div class="rev">
+      <div class="rev-sum">
+        <div class="g-logo" aria-label="Google"><i style="color:#4285F4">G</i><i style="color:#EA4335">o</i><i style="color:#FBBC05">o</i><i style="color:#4285F4">g</i><i style="color:#34A853">l</i><i style="color:#EA4335">e</i></div>
+        <!-- TODO: sample rating – replace 4.9 and "52 reviews" with the real Google Business Profile figures -->
+        <div class="rev-big">4.9</div>
+        <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
+        <p>Based on 52 Google reviews</p>
+        <!-- TODO: GOOGLE_REVIEWS_URL / GOOGLE_WRITE_REVIEW_URL are set at the top of the home section in _source/build.py -->
+        <a class="btn btn-navy btn-sm" href="{{GOOGLE_REVIEWS_URL}}" target="_blank" rel="noopener">Read all reviews on Google</a>
+        <a class="btn btn-out btn-sm" href="{{GOOGLE_WRITE_REVIEW_URL}}" target="_blank" rel="noopener">Write a review</a>
+      </div>
+      <div class="rev-cards">
+        <!-- TODO: sample review – replace with a real Google review (text, name, service) before launch -->
+        <div class="rc"><div class="stars" aria-label="5 out of 5 stars">★★★★★</div><p>We needed a 20 m boom lift on short notice for a facade job in Business Bay. The machine arrived the next morning, fully inspected, and the team was easy to reach on WhatsApp.</p>
+          <div class="who"><span class="av" aria-hidden="true">AR</span><div><b>Ahmed R.</b><span>Google review · Boom lift rental</span></div></div></div>
+        <!-- TODO: sample review – replace with a real Google review (text, name, service) before launch -->
+        <div class="rc"><div class="stars" aria-label="5 out of 5 stars">★★★★★</div><p>Rented two electric scissor lifts for a mall fit-out. Clean machines, charged and ready, and they swapped one out the same day when we needed more height.</p>
+          <div class="who"><span class="av" aria-hidden="true">PS</span><div><b>Priya S.</b><span>Google review · Scissor lift rental</span></div></div></div>
+        <!-- TODO: sample review – replace with a real Google review (text, name, service) before launch -->
+        <div class="rc"><div class="stars" aria-label="5 out of 5 stars">★★★★★</div><p>Bought a used JLG telescopic boom for export. They sent a full walk-around video and all the documents, and the shipment went smoothly.</p>
+          <div class="who"><span class="av" aria-hidden="true">RM</span><div><b>Rahul M.</b><span>Google review · Used machine purchase</span></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. FAQ: questions come from HOME_FAQ in build.py (same list feeds the FAQPage JSON-LD in <head>) -->
+<section class="sec">
+  <div class="wrap faq">
+    <div class="faq-side">
+      <span class="eyebrow">Questions</span>
+      <h2 class="h2">Frequently Asked Questions</h2>
+      <p>Quick answers about hiring, delivery, servicing and buying used machines.</p>
+      <a class="btn btn-wa" href="{{wa:Hi, I have a question.}}" target="_blank" rel="noopener">{{icon:wa}} Still have a question? WhatsApp us</a>
+    </div>
+    <div class="faq-list">
+{{homefaq}}
+    </div>
+  </div>
+</section>
+
+<!-- 10. ENQUIRY: phone order heading -> form -> contacts. Rent / Buy / Service switch the fields (main.js). -->
+<section class="enq" id="enquiry">
+  <div class="wrap enq-grid">
+    <div class="enq-head">
+      <span class="eyebrow">Get a quote</span>
+      <h2 class="h2">Need a Machine for Your Project?</h2>
+      <p class="lead">Tell us the working height, the job and the site location. We'll suggest the right machine and send a quote.</p>
+    </div>
+    <div class="enq-contacts">
+      <ul class="clist">
+        <li><span class="ci">{{icon:phone}}</span><div><small>Call us</small><b><a href="{{PHONE_LINK}}">{{PHONE}}</a></b></div></li>
+        <li><span class="ci ci-wa">{{icon:wa}}</span><div><small>WhatsApp site photos &amp; job details</small><b><a href="{{WA_LINK}}" target="_blank" rel="noopener">{{PHONE}}</a></b></div></li>
+        <li><span class="ci ci-red">{{icon:phone}}</span><div><small>24/7 breakdown support</small><b><a href="{{BREAKDOWN_LINK}}">{{BREAKDOWN}}</a></b></div></li>
+        <li><span class="ci">{{icon:mail}}</span><div><small>Email</small><b><a href="mailto:info@cherrypickersglobal.com">info@cherrypickersglobal.com</a></b></div></li>
+        <li><span class="ci">{{icon:clock}}</span><div><small>Working hours</small><b>Mon – Sat, 9:00 – 19:00</b></div></li>
+        <li><span class="ci">{{icon:pin}}</span><div><small>Yard &amp; office</small><b>Saih Shuaib 4, Dubai Industrial City, Dubai</b></div></li>
+      </ul>
+    </div>
+    <form class="form-card" id="qform" novalidate>
+      <h3>Request a Quote</h3>
+      <p>Takes under a minute. Only name and phone are required.</p>
+      <div class="seg" role="radiogroup" aria-label="I want to">
+        <label><input type="radio" name="want" value="rent" checked><span>Rent</span></label>
+        <label><input type="radio" name="want" value="buy"><span>Buy</span></label>
+        <label><input type="radio" name="want" value="service"><span>Service</span></label>
+      </div>
+      <div class="f-row">
+        <div class="f"><label for="fn">Name <span aria-hidden="true">*</span></label><input id="fn" name="name" required autocomplete="name" aria-describedby="fnErr"><span class="f-err" id="fnErr" hidden>Please enter your name.</span></div>
+        <div class="f"><label for="fp">Phone <span aria-hidden="true">*</span></label><div class="tel"><span>+971</span><input id="fp" name="phone" type="tel" inputmode="tel" required autocomplete="tel-national" placeholder="50 123 4567" aria-describedby="fpErr"></div><span class="f-err" id="fpErr" hidden>Please enter a phone number we can call or WhatsApp.</span></div>
+      </div>
+      <div class="f-row">
+        <div class="f" id="fMachineWrap"><label for="fm" id="fmLabel">Machine or height</label>
+          <select id="fm" name="machine">
+            <option>Not sure – advise me</option><option>Up to 12 m</option><option>12 – 20 m</option><option>20 – 30 m</option><option>30 m +</option>
+            <option>Electric scissor lift</option><option>Rough terrain scissor lift</option><option>Electric boom lift</option><option>Articulated boom lift</option><option>Telescopic boom lift</option>
+          </select>
+          <input id="fmText" name="model" hidden placeholder="e.g. JLG 860SJ" aria-labelledby="fmLabel">
+        </div>
+        <div class="f"><label for="fe" id="feLabel">Emirate</label>
+          <select id="fe" name="emirate"><option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Umm Al Quwain</option><option id="feOther" hidden disabled>Outside UAE (export)</option></select></div>
+      </div>
+      <div class="f" id="fDateWrap"><label for="fd">Start date <i>(optional)</i></label><input id="fd" name="date" type="date"></div>
+      <div class="f"><label for="fmsg">Job details <i>(optional)</i></label><textarea id="fmsg" name="details" placeholder="Working height, type of work, site location, hire period"></textarea></div>
+      <button class="btn btn-red" type="submit">Send Enquiry</button>
+      <p class="f-note">We reply during working hours, Mon – Sat 9:00 – 19:00.</p>
+      <div class="f-done" id="fDone" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
