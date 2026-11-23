@@ -1430,6 +1430,9 @@ tbody tr:nth-child(even) { background: #fafbfd; }
     font-size: 1.6rem; line-height: 1; cursor: pointer;
   }
   .filters.open .filters-head { position: sticky; top: 0; z-index: 2; background: #fff; }
+  /* Page behind the open drawer must not scroll; the drawer's own scroll never chains to the page */
+  html.cpe-drawer-open, html.cpe-drawer-open body { overflow: hidden; }
+  .filters.open { overscroll-behavior: contain; }
 }
 /* Industry tiles: compact, 2 per row on phones (Home, About, Services, Rental, Maintenance) */
 @media (max-width: 600px) {

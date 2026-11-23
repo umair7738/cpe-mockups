@@ -424,7 +424,7 @@
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     if (searchInput && document.activeElement === searchInput) runSearch('typed');
-    else form.classList.remove('open');
+    else closeDrawer();
   });
   // "Clear all": filters and search (sort stays)
   form.querySelectorAll('[data-cpe-clear-all]').forEach(function (a) {
@@ -462,14 +462,51 @@
   });
 
   // ---------- filter drawer (mobile) ----------
+  // While the drawer is open the page behind it is locked; only the drawer itself scrolls
+  // (and only when its content is taller than the screen). position:fixed on <body> is
+  // needed for iOS Safari, which ignores overflow:hidden on body.
+  var drawerMq = window.matchMedia('(max-width: 900px)');
+  var lockedY = null;
+  function lockPage() {
+    if (lockedY !== null) return;
+    lockedY = window.pageYOffset;
+    var b = document.body.style;
+    b.position = 'fixed'; b.top = -lockedY + 'px'; b.left = '0'; b.right = '0'; b.width = '100%';
+    document.documentElement.classList.add('cpe-drawer-open');
+  }
+  function unlockPage() {
+    if (lockedY === null) return;
+    var b = document.body.style;
+    b.position = b.top = b.left = b.right = b.width = '';
+    var html = document.documentElement;
+    html.classList.remove('cpe-drawer-open');
+    // jump straight back: the site's smooth scrolling would otherwise animate it from the top
+    html.style.scrollBehavior = 'auto';
+    window.scrollTo(0, lockedY);
+    html.style.scrollBehavior = '';
+    lockedY = null;
+  }
+  function openDrawer() {
+    form.classList.add('open');
+    form.scrollTop = 0;
+    if (drawerMq.matches) lockPage();
+  }
+  function closeDrawer() {
+    form.classList.remove('open');
+    unlockPage();
+  }
+  // Resized/rotated to desktop width with the drawer open: it is no longer a drawer, so release the page
+  var onMq = function () { if (!drawerMq.matches) closeDrawer(); };
+  if (drawerMq.addEventListener) drawerMq.addEventListener('change', onMq); else drawerMq.addListener(onMq);
+
   document.querySelectorAll('[data-cpe-filter-open]').forEach(function (b) {
-    b.addEventListener('click', function () { form.classList.add('open'); });
+    b.addEventListener('click', openDrawer);
   });
   form.querySelectorAll('[data-cpe-filter-close]').forEach(function (b) {
-    b.addEventListener('click', function () { form.classList.remove('open'); });
+    b.addEventListener('click', closeDrawer);
   });
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && form.classList.contains('open')) form.classList.remove('open');
+    if (e.key === 'Escape' && form.classList.contains('open')) closeDrawer();
   });
 
   // ---------- back / forward ----------
