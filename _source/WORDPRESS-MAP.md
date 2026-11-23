@@ -1,6 +1,6 @@
 # WordPress map: machine listings
 
-How the mockup's listing pages (`/sales/used/`, `/sales/sold/`, `/rental/{category}/`, `/rental/`) map to the custom theme.
+How the mockup's listing pages (`/sales/used/`, `/sales/sold/`, `/rental/{main}/{sub}/`, `/rental/`) and rental main-category pages (`/rental/{main}/`, section 8) map to the custom theme.
 Each mockup part has one WordPress equivalent. Build the PHP from the mockup output, and the existing CSS and JS keep working.
 
 | Mockup | WordPress |
@@ -31,7 +31,7 @@ Each mockup part has one WordPress equivalent. Build the PHP from the mockup out
 ### Taxonomies
 | Taxonomy | Terms (slug → name) |
 |---|---|
-| `machine_type` | `electric-scissor-lifts` Electric Scissor Lift · `rough-terrain-scissor-lifts` Rough Terrain Scissor Lift · `electric-boom-lifts` Electric Boom Lift · `articulated-boom-lifts` Articulated Boom Lift · `telescopic-boom-lifts` Telescopic Boom Lift |
+| `machine_type` (**hierarchical**) | Parent `boom-lifts` Boom Lifts → `telescopic-boom-lifts` Telescopic Boom Lift · `articulated-boom-lifts` Articulated Boom Lift · `electric-boom-lifts` Electric Boom Lift<br>Parent `scissor-lifts` Scissor Lifts → `slab-electric-scissor-lifts` Slab Electric Scissor Lift · `rough-terrain-electric-scissor-lifts` Rough Terrain Electric Scissor Lift · `diesel-4x4-scissor-lifts` Diesel 4x4 Scissor Lift<br>Parent `spider-lifts` Spider Lifts (no children yet; term meta `status` = `coming-soon`, `height_range` = `17 – 36 m`)<br>Machines are assigned the **child** term only. The old terms `electric-scissor-lifts` and `rough-terrain-scissor-lifts` no longer exist (see section 8). |
 | `machine_brand` | `jlg` JLG · `genie` Genie · `dingli` Dingli · `snorkel` Snorkel |
 | `listing_status` | `rental` · `used` · `new` · `sold` |
 
@@ -58,7 +58,9 @@ Each mockup part has one WordPress equivalent. Build the PHP from the mockup out
 | `image` | image | all | Mockup: an image basename in `assets/img/` (the `-sm` variant is used on cards). For sold records this is a photo of the **model**, not the unit. |
 
 ### Permalinks (custom rewrite rules)
-- Rental: `/rental/{machine_type}/{slug}/`
+- Rental machine: `/rental/{slug}/` (flat; the category is shown only in the breadcrumbs, so re-categorising a machine never changes its URL)
+- Rental main category: `/rental/{parent term}/`; sub-category: `/rental/{parent term}/{child term}/`
+- `/rental/{x}/` is resolved **term first**: if `x` is a `machine_type` parent term (or `all-machines`), show that page; otherwise look up a rental `machine` post with slug `x`. A machine slug must never equal a parent term slug – `build.py` asserts this for the mockup data.
 - Others: `/sales/{listing_status}/{slug}/`
 
 ### Slugs must be unique per post type
@@ -226,7 +228,8 @@ Files: `assets/partials/quote-modal.html` (popup markup, generated from `_source
 | Button | Attributes |
 |---|---|
 | Header / mobile bar / generic | `data-quote` |
-| Rental card / rental detail | `data-quote data-type="rental" data-machine="{model}" data-category="{machine_type singular, e.g. Electric scissor lift}"` |
+| Rental card / rental detail | `data-quote data-type="rental" data-machine="{model}" data-category="{child machine_type singular, e.g. Slab electric scissor lift}"` |
+| Boom / Scissor main-category page | `data-quote data-type="rental"` (no category – the visitor picks the type) |
 | Used card / sale detail | `data-quote data-type="sale" data-machine="{year} {model}"` |
 | Sold card / sold detail | `data-quote data-type="sale" data-machine="{model}" data-sold` |
 | Service buttons | `data-quote data-type="service"` |
@@ -239,4 +242,58 @@ Files: `assets/partials/quote-modal.html` (popup markup, generated from `_source
 **Tracking (GTM `dataLayer`):** `generate_lead` {form_id: `quote_popup` | `inline_enquiry`, enquiry_type, machine} on success; `whatsapp_click` {location: `quote_popup`, machine} from the popup's WhatsApp buttons.
 
 **Links from ads:** `#quote` on any URL opens the popup (`#enquiry` too, on pages without an `#enquiry` section). `?machine=`, `?type=rental|sale|service` (or `?need=rent|buy`) and `?category=` pre-fill it.
+
+**Quote categories** (`CATEGORIES` in `_source/quote.py`; the popup's "Machine needed" options and the values `data-category` must match): Telescopic boom lift · Articulated boom lift · Electric boom lift · Slab electric scissor lift · Rough terrain electric scissor lift · Diesel 4x4 scissor lift · Spider lift (coming soon). Spider stays last.
+
+## 8. Rental main and sub-categories, redirects and SEO
+
+### Pages
+| Mockup (`build.py`) | URL | WordPress |
+|---|---|---|
+| `page_rental_landing()` | `/rental/` | page template; 3 cards, one per parent term (`group_tile()`) |
+| `page_rental_group(g)` | `/rental/boom-lifts/`, `/rental/scissor-lifts/`, `/rental/spider-lifts/` | `taxonomy-machine_type.php` when the queried term has no parent: hero + intro (term description / ACF), one `template-parts/category-card.php` per child term (`cat_tile()`), compare table computed from the child terms' machines, "how to choose", rental options, FAQ, related links |
+| `page_rental_group(g)` with `soon` | `/rental/spider-lifts/` | same template; when term meta `status` = `coming-soon`, show the coming-soon panel and "Register interest" (`data-category="Spider lift (coming soon)"`) instead of the cards and table |
+| `page_rental_category(c)` | `/rental/{parent}/{child}/` | `taxonomy-machine_type.php` for a child term: the existing listing (section 2). The chip row lists the sibling child terms + "← All {parent}" |
+| `nav_tree()`, `menu_html()` | header (every page) | Main menu, see "Main menu" below |
+
+### Main menu
+One `<nav class="cpe-menu" id="cpe-menu">` per page (both headers), styled by `assets/css/menu.css` and driven by the main-menu block in `assets/js/main.js`. Enqueue `menu.css` on every page. Every link is in the server HTML; closed panels are hidden with CSS only, and no links are injected by JavaScript.
+
+- **Menu items** (WordPress menu): Rental › Boom Lifts › Telescopic / Articulated / Electric; Rental › Scissor Lifts › Slab Electric / Rough Terrain Electric / Diesel 4x4; Rental › Spider Lifts (no children); Sales › …; Services › …; About; Blog; Contact. The height range under each rental item is the item description (or computed from the term's machines).
+- **Walker output per item with children:** `li.cm-item.cm-has-sub` holding:
+  - the page link `a.cm-link` (label `<span>`, optional `<small>` description);
+  - a toggle `button.cm-toggle[aria-expanded][aria-controls]` (with the label repeated in `.cm-tlabel` for the mobile row);
+  - `div.cm-sub#…` holding:
+    - `.cm-head`, with `button.cm-back` ("Back" / "Back to {parent}") and `.cm-title`;
+    - `ul.cm-list.cm-l{level}`, with `li.cm-overview` ("Rental overview →" / "View all Boom Lifts →") as its first row, then the children, then the optional `li.cm-more` ("All rental machines →").
+- **Items without children:** `li.cm-item > a.cm-link`.
+- **Desktop (>960px):** cascading dropdowns.
+  - Hover intent: 200 ms before a menu closes or switches to a sibling, so a diagonal move towards a flyout doesn't close it.
+  - Flyouts open to the left (`.cm-flip`) when there's no room on the right.
+  - Keyboard: arrow keys open and move between items, Esc closes and returns focus to the toggle, and `aria-expanded` is kept in sync.
+  - Without JS, menus open on hover or focus.
+- **Mobile (≤960px):** the same nav becomes the drawer, opened by `[data-menu-open]` (the burger).
+  - Drill-down panels slide in from the right, with a Back button and a panel title.
+  - A row with children is one button ("Boom Lifts ›"); the category page itself is the "View all …" row at the top of the next panel.
+  - Call and WhatsApp are fixed at the bottom of the drawer.
+  - 960px (not 768px) is where the header has no room for the desktop menu, so tablets get the drawer too.
+
+### Redirects (301)
+`build.py` writes `_source/redirects.csv` (`source,target,regex,code`) from the data, so every moved URL is covered:
+- the 5 old category URLs: `/rental/electric-scissor-lifts/` → `/rental/scissor-lifts/` (that category was split in two), `/rental/rough-terrain-scissor-lifts/` → `/rental/scissor-lifts/diesel-4x4-scissor-lifts/`, and the three boom categories → `/rental/boom-lifts/{child}/`;
+- every rental machine: `/rental/{old machine_type}/{slug}/` → `/rental/{slug}/`.
+
+No target is also a source (no chains). Import:
+- **Redirection plugin:** Tools → Import → CSV (columns: source, target, regex `0`, code `301`).
+- **Rank Math:** Redirections → add each row as a 301 (or use its CSV import and map *source* / *destination*).
+
+If the current live site has other rental URLs (e.g. old category or product pages), add them to the same list before launch.
+
+### Canonicals and sitemap
+- Filtered or searched listings (`?m_type=…`, `?q=…`, `?paged=…` on `/rental/all-machines/` and the category pages) are **canonical to the clean URL** and **not in the sitemap**. Don't also set `noindex` on them: a noindex page with a canonical sends Google mixed signals. In Rank Math, check Titles & Meta → the canonical isn't overridden with the query string.
+- The mockup writes `sitemap.xml` (all built pages except noindexed ones, never URLs with parameters). In WordPress, Rank Math generates the sitemap: include the `machine_type` taxonomy (parent and child terms) and the `machine` post type; exclude `/sales/new/` while it is noindexed.
+
+### Titles, descriptions and structured data
+- Each main-category page has its own `<title>` and meta description (`GROUPS[...]["title"/"desc"]` in `build.py` → Rank Math term SEO fields).
+- Main-category pages output **BreadcrumbList** (Home › Rental › {Main}) and **FAQPage** (the visible FAQ) as JSON-LD (`breadcrumb_jsonld()`, `faq_jsonld()`). In WordPress use either Rank Math's schema (breadcrumbs + FAQ block) or the theme's JSON-LD – not both, or Google sees duplicates.
 

@@ -16,6 +16,8 @@ from html import escape as html_escape
 from urllib.parse import quote
 import shutil
 from collections import Counter, OrderedDict
+from datetime import date
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from PIL import Image as _PIL
 
@@ -37,8 +39,8 @@ LINKS = {
     "about-our-story.html": "about/our-story/",
     "rental.html": "rental/",
     "rental-all.html": "rental/all-machines/",
-    "rental-category.html": "rental/electric-scissor-lifts/",
-    "rental-detail.html": "rental/electric-scissor-lifts/genie-gs-3246/",
+    "rental-category.html": "rental/scissor-lifts/slab-electric-scissor-lifts/",
+    "rental-detail.html": "rental/genie-gs-3246/",
     "sales.html": "sales/",
     "equipment-for-sale.html": "sales/",
     "sales-new.html": "sales/new/",
@@ -88,43 +90,67 @@ BY_KEY = {f"{tax(it, 'listing_status')}:{it['slug']}": it for it in MACHINES}
 BRAND_NAMES = {"jlg": "JLG", "genie": "Genie", "dingli": "Dingli", "snorkel": "Snorkel"}
 CONTAIN = {"r-gs5390", "r-z4525j", "r-z4525ic", "r-800aj", "r-gs1932", "r-510aj", "r-s80x", "r-z6034"}
 
+def r1(x):
+    """One decimal, rounded half up (43.15 -> 43.2, 18.15 -> 18.2), as in the site copy; float() keeps :g formatting working."""
+    return float(Decimal(str(x)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
+
+
 # ------------------------------------------------------------------ rental categories
 CATS = OrderedDict()
-CATS["es"] = dict(
-    slug="electric-scissor-lifts", name="Electric Scissor Lifts", one="Electric Scissor Lift", img="cat-electric-scissor",
-    short="Quiet, zero-emission platforms for indoor fit-out, warehouses and malls.",
-    h1="Electric Scissor Lift Rental in Dubai & UAE",
-    intro="Electric scissor lifts are quiet, zero-emission work platforms that lift workers and tools straight up. We rent {n} electric scissor lift models from {lo} to {hi} working height for indoor fit-out, warehouses, malls and maintenance work, by the day, week or month, across all seven emirates.",
-    hb=[(0, 10, "Up to 10 m"), (10, 13, "10 – 13 m"), (13, 99, "13 m and above")],
+CATS["se"] = dict(
+    slug="slab-electric-scissor-lifts", name="Slab Electric Scissor Lifts", one="Slab Electric Scissor Lift", menu="Slab Electric",
+    img="cat-electric-scissor",
+    short="Compact, quiet electric scissors for smooth indoor floors and standard doorways.",
+    h1="Slab Electric Scissor Lift Rental in Dubai & UAE",
+    intro="Slab electric scissor lifts are compact, quiet, zero-emission work platforms that lift workers and tools straight up on smooth, level floors. We rent {n} slab electric models from {lo} to {hi} working height for indoor fit-out, warehouses, malls and maintenance work, by the day, week or month, across all seven emirates.",
+    hb=[(0, 10, "Up to 10 m"), (10, 99, "10 m and above")],
     second=("cap", "Platform capacity", [(0, 300, "Up to 300 kg"), (300, 400, "300 – 399 kg"), (400, 9999, "400 kg and above")]),
     uses=["Ceiling, lighting and MEP installation", "Warehouse racking and maintenance", "Mall, airport and hotel interior work",
           "Painting, signage and fit-out", "Facility maintenance on smooth, level floors"],
     choose=[("Working height", "Working height is platform height plus about 2 m (a person's reach). Pick a machine a little above your highest work point."),
-            ("Width and doors", "Check door and corridor widths before you book – small slab scissors pass through standard doors."),
-            ("Floor", "Electric scissor lifts need smooth, firm, level floors. For outdoor or rough ground, choose a rough terrain scissor lift."),
-            ("Weight on the platform", "Add up people, tools and materials. Our electric scissors carry 227 kg to 454 kg.")],
+            ("Width and doors", "Check door and corridor widths before you book – our narrowest slab scissors pass through standard doors."),
+            ("Floor", "Slab scissor lifts need smooth, firm, level floors. For outdoor or uneven ground, choose a rough terrain electric or diesel 4x4 scissor lift."),
+            ("Weight on the platform", "Add up people, tools and materials. Our slab electric scissors carry 227 kg to 454 kg.")],
     faq=[("What is the difference between working height and platform height?", "Platform height is how high the platform floor goes. Working height adds about 2 m for the person's reach. A Genie GS-3246 has a 9.78 m platform height and an 11.75 m working height."),
-         ("Can electric scissor lifts be used outdoors?", "Some models can work outdoors on firm, level ground in low wind. For uneven ground or strong wind, choose a rough terrain scissor lift."),
-         ("Can I rent an electric scissor lift for one day?", "Yes. We rent by the day, week or month, and long-term."),
+         ("Can slab electric scissor lifts be used outdoors?", "Only on firm, level, paved ground in low wind. For uneven ground, choose a rough terrain electric or diesel 4x4 scissor lift."),
+         ("Can I rent a slab electric scissor lift for one day?", "Yes. We rent by the day, week or month, and long-term."),
          ("Do you supply an operator?", "Yes, on request. Tell us when you book.")])
-CATS["rt"] = dict(
-    slug="rough-terrain-scissor-lifts", name="Rough Terrain Scissor Lifts", one="Rough Terrain Scissor Lift", img="cat-rt-scissor",
-    short="Diesel 4x4 platforms with big decks for outdoor sites and uneven ground.",
-    h1="Rough Terrain Scissor Lift Rental in Dubai & UAE",
-    intro="Rough terrain scissor lifts are diesel work platforms with four-wheel drive and large decks, built for outdoor sites and uneven ground. We rent {n} rough terrain models from {lo} to {hi} working height, each carrying up to 680 kg, across all seven emirates.",
+CATS["re"] = dict(
+    slug="rough-terrain-electric-scissor-lifts", name="Rough Terrain Electric Scissor Lifts", one="Rough Terrain Electric Scissor Lift",
+    menu="Rough Terrain Electric", img="r-m4069le",
+    short="Heavy-duty battery scissors for firm outdoor ground – zero emissions, low noise.",
+    h1="Rough Terrain Electric Scissor Lift Rental in Dubai & UAE",
+    intro="Rough terrain electric scissor lifts are heavy-duty battery work platforms with zero emissions, built for firm outdoor ground as well as large indoor sites. We rent {n} rough terrain electric models from {lo} to {hi} working height across all seven emirates, by the day, week or month.",
+    hb=[(0, 14, "Up to 14 m"), (14, 99, "14 m and above")],
+    second=("cap", "Platform capacity", [(0, 300, "Up to 300 kg"), (300, 9999, "300 kg and above")]),
+    uses=["Outdoor fit-out and facade work on firm ground", "Sites with noise or exhaust limits", "Large warehouses, factories and logistics yards",
+          "Car parks, podiums and paved site areas", "Mixed indoor and outdoor work on one site"],
+    choose=[("Ground conditions", "These machines work on firm, uneven ground outdoors. [Add: gradeability and ground clearance for the Dingli 1412HD / 1612HD and JLG M4069LE.]"),
+            ("Working height", "Our rough terrain electric scissors reach 13.8 m to 15.7 m."),
+            ("Weight on the platform", "They carry 250 kg to 362 kg – add up people, tools and materials together."),
+            ("Shift length", "[Add: typical battery runtime and charging needs for your machines.]")],
+    faq=[("What is the difference between a rough terrain electric and a diesel 4x4 scissor lift?", "Both work on outdoor ground. Rough terrain electric models run on batteries with zero emissions and little noise. Diesel 4x4 models carry heavier loads (up to 680 kg) and reach higher, up to 18.2 m."),
+         ("Can rough terrain electric scissor lifts be used indoors?", "Yes. They are electric, so they suit large indoor sites too – check that the floor can take the machine's weight (3.4 – 4.9 tonnes)."),
+         ("How long does the battery last?", "[Your answer – typical hours per charge for your machines.]"),
+         ("Do you supply an operator?", "Yes, on request. Tell us when you book.")])
+CATS["dz"] = dict(
+    slug="diesel-4x4-scissor-lifts", name="Diesel 4x4 Scissor Lifts", one="Diesel 4x4 Scissor Lift", menu="Diesel 4x4", img="cat-rt-scissor",
+    short="Diesel four-wheel-drive platforms with big decks for outdoor sites and rough ground.",
+    h1="Diesel 4x4 Scissor Lift Rental in Dubai & UAE",
+    intro="Diesel 4x4 scissor lifts are rough terrain work platforms with four-wheel drive and large decks, built for outdoor sites and uneven ground. We rent {n} diesel 4x4 models from {lo} to {hi} working height, each carrying up to 680 kg, across all seven emirates.",
     hb=[(0, 16, "Up to 16 m"), (16, 99, "16 m and above")],
     second=("cap", "Platform capacity", [(600, 9999, "600 kg and above")]),
     uses=["Construction sites and building shells", "Cladding, facade and glazing work", "Steel and structural installation",
           "Outdoor events and exhibitions", "Infrastructure and industrial yards"],
-    choose=[("Ground conditions", "Rough terrain models handle compacted soil, gravel and slopes – check the site gradient before booking."),
+    choose=[("Ground conditions", "Diesel 4x4 models handle compacted soil, gravel and slopes – check the site gradient before booking."),
             ("Deck size and load", "Large decks carry crews, panels and tools together – up to 680 kg on our machines."),
-            ("Working height", "Our rough terrain scissors reach 15.1 m to 18.2 m."),
+            ("Working height", "Our diesel 4x4 scissors reach 15.1 m to 18.2 m."),
             ("Access and transport", "These machines are large and heavy (5.9 – 7.5 tonnes) – confirm site access for delivery.")],
-    faq=[("Can a rough terrain scissor lift be used indoors?", "They run on diesel, so they are not suited to enclosed spaces without proper ventilation. Indoors, use an electric scissor lift."),
-         ("How much weight can a rough terrain scissor lift carry?", "Our Genie GS-4390 RT and GS-5390 RT carry up to 680 kg – people, tools and materials together."),
-         ("What is the difference between a rough terrain and an electric scissor lift?", "Rough terrain models are diesel, 4x4 and built for outdoor ground. Electric models are quiet and compact, for smooth indoor floors.")])
+    faq=[("Can a diesel 4x4 scissor lift be used indoors?", "They run on diesel, so they are not suited to enclosed spaces without proper ventilation. Indoors, use a slab electric or rough terrain electric scissor lift."),
+         ("How much weight can a diesel 4x4 scissor lift carry?", "Our Genie GS-4390 RT and GS-5390 RT carry up to 680 kg – people, tools and materials together."),
+         ("What is the difference between a diesel 4x4 and an electric scissor lift?", "Diesel 4x4 models are built for rough outdoor ground and the heaviest loads. Slab electric models are quiet and compact for smooth indoor floors; rough terrain electric models handle firm outdoor ground with zero emissions.")])
 CATS["eb"] = dict(
-    slug="electric-boom-lifts", name="Electric Boom Lifts", one="Electric Boom Lift", img="cat-electric-boom",
+    slug="electric-boom-lifts", menu="Electric", name="Electric Boom Lifts", one="Electric Boom Lift", img="cat-electric-boom",
     short="Battery booms that reach up and over – indoors or in noise-sensitive areas.",
     h1="Electric Boom Lift Rental in Dubai & UAE",
     intro="Electric boom lifts are battery-powered booms that reach up and out over obstacles with no exhaust and little noise. We rent {n} electric boom lift models from {lo} to {hi} working height for indoor atriums, malls, airports and night work, across all seven emirates.",
@@ -140,7 +166,7 @@ CATS["eb"] = dict(
          ("How long does the battery last?", "[Your answer – typical hours per charge for your machines.]"),
          ("What is the highest electric boom you rent?", "The JLG 600JP, with a 20.39 m working height and 13.54 m outreach.")])
 CATS["ab"] = dict(
-    slug="articulated-boom-lifts", name="Articulated Boom Lifts", one="Articulated Boom Lift", img="cat-articulated",
+    slug="articulated-boom-lifts", menu="Articulated", name="Articulated Boom Lifts", one="Articulated Boom Lift", img="cat-articulated",
     short="Jointed booms that bend up and over obstacles to reach tight spots.",
     h1="Articulated Boom Lift Rental in Dubai & UAE",
     intro="Articulated boom lifts (knuckle booms) have jointed arms that bend up and over obstacles to reach tight spots. We rent {n} articulated boom models from {lo} to {hi} working height – including the Genie Z-135/70 – across all seven emirates.",
@@ -156,7 +182,7 @@ CATS["ab"] = dict(
          ("What is the tallest articulated boom you rent?", "The Genie Z-135/70, with a 43.15 m working height and 21.25 m outreach."),
          ("Do you supply an operator?", "Yes, on request. Tell us when you book.")])
 CATS["tb"] = dict(
-    slug="telescopic-boom-lifts", name="Telescopic Boom Lifts", one="Telescopic Boom Lift", img="cat-telescopic",
+    slug="telescopic-boom-lifts", menu="Telescopic", name="Telescopic Boom Lifts", one="Telescopic Boom Lift", img="cat-telescopic",
     short="Straight booms for maximum height and reach on facades and steel work.",
     h1="Telescopic Boom Lift Rental in Dubai & UAE",
     intro="Telescopic boom lifts (straight booms) extend straight out for the most height and horizontal reach from one position. We rent {n} telescopic boom models from {lo} to {hi} working height for facades, steel erection and large structures across all seven emirates.",
@@ -172,23 +198,115 @@ CATS["tb"] = dict(
          ("Which telescopic boom carries the most weight?", "The Genie S-80X, with a 454 kg platform capacity."),
          ("Telescopic or articulated – which do I need?", "Telescopic for the longest straight reach; articulated when you need to go up and over obstacles.")])
 
+# Sub-category order (menu, filters, height table): boom types first, then scissor types – as in the client's brief.
+CATS = OrderedDict((k, CATS[k]) for k in ("tb", "ab", "eb", "se", "re", "dz"))
+
+# ------------------------------------------------------------------ rental MAIN categories (parent machine_type terms)
+# WordPress: hierarchical machine_type taxonomy. A parent term's page (taxonomy-machine_type.php) shows content + one
+# card per child term (template-parts/category-card.php). Spider has no child terms yet: term meta status=coming-soon.
+GROUPS = OrderedDict()
+GROUPS["boom"] = dict(
+    slug="boom-lifts", name="Boom Lifts", one="Boom Lift", img="cat-articulated", subs=["tb", "ab", "eb"],
+    cmp=("outreach", "Outreach"),
+    short="Telescopic, articulated and electric booms that reach up and out – up to 43 m.",
+    h1="Boom Lift Rental in Dubai & UAE",
+    intro="Boom lifts raise a work platform up and out on an arm, so you can reach over obstacles and work away from the base. We rent {n} boom lift models in three types – telescopic, articulated and electric – from {lo} to {hi} working height, by the day, week or month, across all seven emirates.",
+    title="Boom Lift Rental in Dubai & UAE – {n} Models | Cherry Pickers Equipment",
+    desc="Rent telescopic, articulated and electric boom lifts in Dubai and across the UAE: {n} models, {lo} to {hi} working height. Daily to long-term hire.",
+    when={"tb": ["You need the <strong>longest straight reach</strong> from one position", "Nothing is in the way between the machine and the work", "Facades, steel erection, bridges and large structures"],
+          "ab": ["Obstacles are in the way – the arm bends <strong>up and over</strong>", "You need tight spots behind or above other equipment", "Piping, MEP, plants and roof work"],
+          "eb": ["You work <strong>indoors</strong> or in noise-sensitive areas", "No exhaust is allowed – malls, airports, atriums", "Night work and occupied buildings"]},
+    uses=["Facades, glazing and cladding", "Steel structures and roof work", "Piping and MEP work over obstacles",
+          "Atriums, malls and airport terminals", "Industrial plants, tanks and yards"],
+    faq=[("What is a boom lift?", "A boom lift (also called a cherry picker) is a work platform on a telescopic or jointed arm, mounted on a wheeled base. It reaches up and out, so you can work away from the machine or over obstacles."),
+         ("Telescopic, articulated or electric – which boom lift do I need?", "Telescopic for the longest straight reach, articulated when you need to go up and over obstacles, and electric for indoor or noise-sensitive work with no exhaust."),
+         ("What is the tallest boom lift you rent?", "The Genie Z-135/70 articulated boom, with a 43.15 m working height and 21.25 m outreach."),
+         ("Do you supply an operator?", "Yes, on request. Tell us when you book.")])
+GROUPS["scissor"] = dict(
+    slug="scissor-lifts", name="Scissor Lifts", one="Scissor Lift", img="cat-electric-scissor", subs=["se", "re", "dz"],
+    cmp=("platform_height", "Platform height"),
+    short="Slab electric, rough terrain electric and diesel 4x4 platforms that go straight up.",
+    h1="Scissor Lift Rental in Dubai & UAE",
+    intro="Scissor lifts raise a large work platform straight up, carrying several people with tools and materials. We rent {n} scissor lift models in three types – slab electric, rough terrain electric and diesel 4x4 – from {lo} to {hi} working height, by the day, week or month, across all seven emirates.",
+    title="Scissor Lift Rental in Dubai & UAE – {n} Models | Cherry Pickers Equipment",
+    desc="Rent slab electric, rough terrain electric and diesel 4x4 scissor lifts in Dubai and across the UAE: {n} models, {lo} to {hi} working height.",
+    when={"se": ["<strong>Smooth, level floors</strong> indoors", "You need to pass standard doors, lifts and corridors", "Fit-out, ceilings, lighting and warehouse work"],
+          "re": ["<strong>Firm outdoor ground</strong> with zero emissions", "Sites with noise or exhaust limits", "Mixed indoor and outdoor work on one site"],
+          "dz": ["<strong>Rough outdoor ground</strong>, gravel or slopes", "Heavy loads – up to 680 kg on a large deck", "Construction sites, cladding and steel work"]},
+    uses=["Ceiling, lighting and MEP installation", "Warehouse racking and maintenance", "Cladding, facade and glazing work",
+          "Construction sites and building shells", "Events, exhibitions and fit-out"],
+    faq=[("What is a scissor lift?", "A scissor lift is a work platform raised straight up by criss-cross supports. It has a larger deck than a boom lift and carries several people with tools and materials."),
+         ("Which scissor lift do I need?", "Slab electric for smooth indoor floors, rough terrain electric for firm outdoor ground with zero emissions, and diesel 4x4 for rough ground and the heaviest loads."),
+         ("What is the difference between working height and platform height?", "Platform height is how high the platform floor goes. Working height adds about 2 m for the person's reach."),
+         ("Should I rent a scissor lift or a boom lift?", "Choose a scissor lift to go straight up with a large platform. Choose a boom lift when you need to reach up and out, or over obstacles.")])
+GROUPS["spider"] = dict(
+    slug="spider-lifts", name="Spider Lifts", one="Spider Lift", img="cat-spider", subs=[], soon=True,
+    lo="17 m", hi="36 m", range="17 – 36 m",
+    short="Compact tracked booms for tight access, slopes and delicate floors – 17 to 36 m, coming soon.",
+    h1="Spider Lift Rental in Dubai & UAE",
+    intro="Spider lifts are compact booms on rubber tracks with outriggers. They fit through narrow access, are light on delicate floors and level themselves on slopes, steps or soft ground. Spider lifts from {lo} to {hi} working height are joining our rental fleet soon – register your interest and we'll contact you first.",
+    title="Spider Lift Rental in Dubai & UAE – Coming Soon | Cherry Pickers Equipment",
+    desc="Tracked spider lifts from {lo} to {hi} working height are joining our UAE rental fleet. Register interest for tight-access, delicate-floor and sloped sites.",
+    when={"spider": ["Access is <strong>tight</strong> – narrow doors, gates or corridors",
+                     "Floors are delicate or the ground is soft (light weight, non-marking tracks)",
+                     "You set up on slopes, steps or uneven ground (outriggers level the machine)",
+                     "Atriums, lobbies, glazing and tree work, indoors or outdoors"]},
+    uses=["Atriums, lobbies and shopping malls", "Glazing and facade work behind landscaping", "Halls, places of worship and heritage buildings",
+          "Tree work and outdoor maintenance on soft ground", "Sites reached through gates, doors or narrow paths"],
+    faq=[("What is a spider lift and when do I need one?", "A spider lift is a compact boom on rubber tracks with outriggers. It fits through narrow access, is light on delicate floors and levels itself on slopes, stairs or soft ground. Choose one when access is tight or the floor cannot take a standard boom."),
+         ("When will spider lifts be available?", "Spider lifts from 17 m to 36 m working height are joining our fleet soon. Register your interest and we'll contact you as soon as they arrive."),
+         ("What can I use until then?", "For indoor work on smooth floors, an electric boom lift or slab electric scissor lift often does the job. Tell us the site and we'll suggest a machine from our current fleet.")])
+
+for gk, g in GROUPS.items():
+    g["key"] = gk
+    g["file"] = f"rental-{g['slug']}.html"
+    LINKS[g["file"]] = f"rental/{g['slug']}/"
+    for k in g["subs"]:
+        CATS[k]["parent"] = gk
+
 for k, c in CATS.items():
     ms = [it for it in RENTAL_ITEMS if tax(it, "machine_type") == c["slug"]]
     whs = [acf(it, "working_height") for it in ms]
     c["key"] = k
+    c["group"] = GROUPS[c["parent"]]
     c["models"] = ms
     c["n"] = len(ms)
     c["lo"] = f"{min(whs):g} m"
     c["hi"] = f"{max(whs):g} m"
-    c["range"] = f"{min(whs):.1f} – {max(whs):.1f} m"
+    c["range"] = f"{r1(min(whs))} – {r1(max(whs))} m"
     c["file"] = f"rental-{c['slug']}.html"
     c.setdefault("search", True)   # listing search on this category page (False = no search markup)
-    LINKS[c["file"]] = f"rental/{c['slug']}/"
+    LINKS[c["file"]] = f"rental/{c['group']['slug']}/{c['slug']}/"
 N_RENTAL = len(RENTAL_ITEMS)
+
+for g in GROUPS.values():
+    g["cats"] = [CATS[k] for k in g["subs"]]
+    g["models"] = [it for c in g["cats"] for it in c["models"]]
+    g["n"] = len(g["models"])
+    if g["models"]:
+        whs = [acf(it, "working_height") for it in g["models"]]
+        g["lo"], g["hi"] = f"{min(whs):g} m", f"{max(whs):g} m"
+        g["range"] = f"{r1(min(whs))} – {r1(max(whs))} m"
+
+# Machine pages are flat (/rental/{slug}/), so a machine slug must never equal a category URL segment.
+_clash = {it["slug"] for it in RENTAL_ITEMS} & ({g["slug"] for g in GROUPS.values()} | {"all-machines"})
+assert not _clash, f"rental machine slug clashes with a category URL: {_clash}"
+
+# Old flat rental category URLs (before the main/sub split) -> where they 301 now. Feeds _source/redirects.csv.
+# electric-scissor-lifts was split into two sub-categories, so it goes to the Scissor Lifts main page.
+OLD_RENTAL_CATS = {"electric-scissor-lifts": "rental/scissor-lifts/",
+                   "rough-terrain-scissor-lifts": "rental/scissor-lifts/diesel-4x4-scissor-lifts/",
+                   "electric-boom-lifts": "rental/boom-lifts/electric-boom-lifts/",
+                   "articulated-boom-lifts": "rental/boom-lifts/articulated-boom-lifts/",
+                   "telescopic-boom-lifts": "rental/boom-lifts/telescopic-boom-lifts/"}
+# new machine_type -> the old one (old machine URLs were /rental/{old machine_type}/{slug}/)
+OLD_TYPE = {"slab-electric-scissor-lifts": "electric-scissor-lifts", "rough-terrain-electric-scissor-lifts": "electric-scissor-lifts",
+            "diesel-4x4-scissor-lifts": "rough-terrain-scissor-lifts"}
 
 # machine_type term -> (sales group, label shown on sales/sold cards). Scissor types share one sales label.
 TYPES = {"telescopic-boom-lifts": ("telescopic", "Telescopic Boom Lift"), "articulated-boom-lifts": ("articulated", "Articulated Boom Lift"),
-         "electric-scissor-lifts": ("scissor", "Scissor Lift"), "rough-terrain-scissor-lifts": ("scissor", "Scissor Lift"),
+         "slab-electric-scissor-lifts": ("scissor", "Scissor Lift"), "rough-terrain-electric-scissor-lifts": ("scissor", "Scissor Lift"),
+         "diesel-4x4-scissor-lifts": ("scissor", "Scissor Lift"),
          "electric-boom-lifts": ("electric-boom", "Electric Boom Lift")}
 MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
 
@@ -219,13 +337,13 @@ def band(v, bands):
 
 # ------------------------------------------------------------------ per-machine detail pages (flat token -> folder URL)
 # machine-<id>.html -> the machine's permalink (WordPress: get_permalink()):
-#   rental -> rental/<machine_type>/<slug>/     e.g. rental/telescopic-boom-lifts/genie-s-65/
+#   rental -> rental/<slug>/                    e.g. rental/genie-s-65/ (category only in the breadcrumbs)
 #   used   -> sales/used/<slug>/                e.g. sales/used/2011-jlg-860sj/
 #   sold   -> sales/sold/<slug>/                e.g. sales/sold/2015-jlg-860sj/
 def machine_path(it):
     st = tax(it, "listing_status")
     if st == "rental":
-        return f"rental/{tax(it, 'machine_type')}/{it['slug']}/"
+        return f"rental/{it['slug']}/"
     return f"sales/{st}/{it['slug']}/"
 
 
@@ -572,6 +690,9 @@ def listing_results(ctx):
 # Front-end config for the current page (WordPress: wp_localize_script('cpe-listing', 'CPE', [...])).
 # listing() sets it; build() prints it in <head> and adds listing.js. Reset by build() for every page.
 CPE_PAGE = None
+# Structured data for the current page: a page function sets dict(faq=[(q, a), ...]); build() then prints
+# BreadcrumbList + FAQPage JSON-LD in <head>. Reset by build() for every page.
+PAGE_LD = None
 
 
 # ------------------------------------------------------------------ archive-machine.php: listing layout
@@ -598,11 +719,11 @@ def faq_html(items):
     return '<div class="faq">' + "".join(out) + "</div>"
 
 
-# ================================================================== RENTAL LANDING
-def page_rental_landing():
-    tiles = []
-    for c in CATS.values():
-        tiles.append(f'''<a class="tile" href="{c['file']}">
+# ================================================================== RENTAL: shared parts
+# template-parts/category-card.php – image card for a main category (group) or a sub-category
+def cat_tile(c):
+    """Card for a sub-category (child machine_type term) – links to its listing page."""
+    return f'''<a class="tile" href="{c['file']}">
         {media(c['img'] + '-sm', c['one'] + ' rental in Dubai', 'tile-img')}
         <div class="tile-body">
           <span class="tile-meta">{c['n']} models · {c['range']}</span>
@@ -610,17 +731,58 @@ def page_rental_landing():
           <p>{c['short']}</p>
           <span class="tile-link">View {c['name'].lower()} →</span>
         </div>
-      </a>''')
-    # Spider lifts: not in the current fleet, so the tile goes to an enquiry instead of a category page
-    tiles.append(f'''<a class="tile" href="contact.html#enquiry" {quote_attrs("rental", category=QUOTE_CATEGORIES[-1])}>
-        {media('cat-spider-sm', 'Tracked spider lift for rent in Dubai', 'tile-img')}
+      </a>'''
+
+
+def group_tile(g):
+    """Card for a main category (parent machine_type term) – links to its main-category page."""
+    meta = f"Coming soon · {g['range']}" if g.get("soon") else f"{g['n']} models · {g['range']}"
+    link = f"About {g['name'].lower()} →" if g.get("soon") else f"View {g['name'].lower()} →"
+    return f'''<a class="tile" href="{g['file']}">
+        {media(g['img'] + '-sm', g['one'] + ' rental in Dubai', 'tile-img')}
         <div class="tile-body">
-          <span class="tile-meta">On request</span>
-          <h3>Spider Lifts</h3>
-          <p>Compact tracked booms that fit through doorways and set up on slopes, stairs and soft ground.</p>
-          <span class="tile-link">Ask about spider lifts →</span>
+          <span class="tile-meta">{meta}</span>
+          <h3>{g['name']}</h3>
+          <p>{g['short']}</p>
+          <span class="tile-link">{link}</span>
         </div>
-      </a>''')
+      </a>'''
+
+
+def rental_options_html():
+    return f'''<!-- RENTAL OPTIONS -->
+<section class="section section--alt section--tight">
+  <div class="wrap">
+    <h2>Rental Options</h2>
+    <div class="grid grid-4 mt-24">
+      <div class="service-block"><div class="icon">{icon("calendar")}</div><h3>Flexible periods</h3><p>Daily, weekly, monthly or long-term hire.</p></div>
+      <div class="service-block"><div class="icon">{icon("truck")}</div><h3>Delivery across the UAE</h3><p>To your site in all seven emirates, as soon as possible.</p></div>
+      <div class="service-block"><div class="icon">{icon("user")}</div><h3>Operator on request</h3><p>Ask for an operator when you book.</p></div>
+      <div class="service-block"><div class="icon">{icon("shield")}</div><h3>Inspected machines</h3><p>Every machine is checked before delivery.</p></div>
+    </div>
+  </div>
+</section>'''
+
+
+def spec_span(items, field, unit):
+    """'15.7 – 28.2 m' over the machines' values of an ACF field ('—' when none recorded)."""
+    vals = [acf(it, field) for it in items if acf(it, field) is not None]
+    if not vals:
+        return "—"
+    lo, hi = min(vals), max(vals)
+    if unit == "m":
+        lo, hi = r1(lo), r1(hi)
+    return f"{lo:g} {unit}" if lo == hi else f"{lo:g} – {hi:g} {unit}"
+
+
+GUIDE_LINKS = [("Boom Lift vs Scissor Lift: How to Choose", "blog-detail.html"),
+               ("Articulated vs Telescopic Boom Lift", "blog-detail.html"),
+               ("Working Height vs Platform Height Explained", "blog-detail.html")]
+
+
+# ================================================================== RENTAL LANDING
+def page_rental_landing():
+    tiles = [group_tile(g) for g in GROUPS.values()]
     # height finder table
     bands = RENTAL_BANDS
     rows = []
@@ -631,14 +793,18 @@ def page_rental_landing():
             if ms:
                 cells.append(f'<a href="{c["file"]}"><strong>{c["name"]}</strong></a><br><span class="small muted">{", ".join(acf(it, "model") for it in ms)}</span>')
         rows.append(f'<tr><td><strong>{lab}</strong></td><td>{"<hr class=\"cell-hr\">".join(cells)}</td></tr>')
+    sp = GROUPS["spider"]
     faq = [
-        ("What access equipment can I rent from Cherry Pickers Equipment?", f"We rent {N_RENTAL} models across five types: electric scissor lifts, rough terrain scissor lifts, electric boom lifts, articulated boom lifts and telescopic boom lifts, from 7.8 m to 43 m working height. Spider lifts are available on request."),
-        ("What is a spider lift and when do I need one?", "A spider lift is a compact boom on rubber tracks with outriggers. It fits through standard doorways, is light on delicate floors and levels itself on slopes, stairs or soft ground. Ask us when access is tight or the floor cannot take a standard boom."),
+        ("What access equipment can I rent from Cherry Pickers Equipment?", f"We rent {N_RENTAL} models of boom lifts (telescopic, articulated and electric) and scissor lifts (slab electric, rough terrain electric and diesel 4x4), from 7.8 m to 43 m working height. Spider lifts from {sp['lo']} to {sp['hi']} are coming soon."),
+        sp["faq"][0],
         ("What is the minimum rental period?", "You can rent for a single day. We also offer weekly, monthly and long-term hire."),
         ("Do you deliver outside Dubai?", "Yes. We deliver and collect across all seven emirates: Dubai, Abu Dhabi, Sharjah, Ajman, Ras Al Khaimah, Fujairah and Umm Al Quwain."),
         ("Do you supply operators?", "Yes, on request. Tell us when you book and we will include an operator with the machine."),
         ("How do I choose between a scissor lift and a boom lift?", "Choose a scissor lift to go straight up with a large platform. Choose a boom lift when you need to reach up and out, or over obstacles."),
     ]
+    sc, bm = GROUPS["scissor"], GROUPS["boom"]
+    sc_links = " &nbsp; ".join(f'<a class="link-arrow" href="{c["file"]}">{c["menu"]} →</a>' for c in sc["cats"])
+    bm_links = " &nbsp; ".join(f'<a class="link-arrow" style="color:#ff5a45" href="{c["file"]}">{c["menu"]} →</a>' for c in bm["cats"])
     return f'''<!-- 1. HERO: full-width photo (LCP, eager) + answer-first text -->
 <section class="r-hero">
   {hero_img("cat-articulated", "Articulated boom lift for rent on a UAE construction site")}
@@ -653,15 +819,15 @@ def page_rental_landing():
   </div>
 </section>
 
-<!-- 2. CATEGORY TILES: image cards, each links to /rental/{{category}}/ -->
+<!-- 2. MAIN CATEGORY TILES: each links to /rental/{{main category}}/ (which lists its sub-categories) -->
 <section class="section" id="categories">
   <div class="wrap">
     <div class="section-head">
       <span class="eyebrow">Choose a machine type</span>
       <h2>Our Rental Equipment Categories</h2>
-      <p>Pick a category to see every machine we have, with working height, outreach and capacity – and filter to the one that fits your job.</p>
+      <p>Pick a category to see its machine types, then filter to the machine that fits your job by working height, outreach and capacity.</p>
     </div>
-    <div class="tiles">
+    <div class="tiles tiles--3">
       {"".join(tiles)}
     </div>
     <p class="mt-24"><a class="link-arrow" href="rental-all.html">Browse all {N_RENTAL} rental machines with filters →</a></p>
@@ -699,9 +865,10 @@ def page_rental_landing():
           <li>You need to go <strong>straight up</strong></li>
           <li>Several people, tools or materials go on the platform</li>
           <li>The work area is directly above the machine</li>
-          <li>Indoors on smooth floors (electric) or outdoors on rough ground (rough terrain)</li>
+          <li>Indoors on smooth floors (slab electric) or outdoors on rough ground (rough terrain electric, diesel 4x4)</li>
         </ul>
-        <a class="link-arrow" href="{CATS['es']['file']}">Electric scissor lifts →</a> &nbsp; <a class="link-arrow" href="{CATS['rt']['file']}">Rough terrain →</a>
+        <p><a class="link-arrow" href="{sc['file']}">All scissor lifts →</a></p>
+        {sc_links}
       </div>
       <div class="split-panel split-panel--navy">
         <h3 style="font-size:1.5rem">Choose a boom lift when…</h3>
@@ -711,17 +878,13 @@ def page_rental_landing():
           <li>You need the longest straight reach (telescopic)</li>
           <li>Quiet, zero-emission work indoors (electric boom)</li>
         </ul>
-        <a class="link-arrow" style="color:#ff5a45" href="{CATS['ab']['file']}">Articulated →</a> &nbsp; <a class="link-arrow" style="color:#ff5a45" href="{CATS['tb']['file']}">Telescopic →</a> &nbsp; <a class="link-arrow" style="color:#ff5a45" href="{CATS['eb']['file']}">Electric boom →</a>
+        <p><a class="link-arrow" style="color:#ff5a45" href="{bm['file']}">All boom lifts →</a></p>
+        {bm_links}
       </div>
       <div class="split-panel">
         <h3 style="font-size:1.5rem">Choose a spider lift when…</h3>
-        <ul class="tick-list">
-          <li>Access is <strong>tight</strong> – narrow doors, gates or corridors</li>
-          <li>Floors are delicate or the ground is soft (light weight, non-marking tracks)</li>
-          <li>You set up on slopes, steps or uneven ground (outriggers level the machine)</li>
-          <li>Atriums, lobbies, glazing and tree work, indoors or outdoors</li>
-        </ul>
-        <a class="link-arrow" href="contact.html#enquiry" {quote_attrs("rental", category=QUOTE_CATEGORIES[-1])}>Ask about spider lifts →</a>
+        <ul class="tick-list">{"".join(f"<li>{x}</li>" for x in sp["when"]["spider"])}</ul>
+        <a class="link-arrow" href="{sp['file']}">Spider lifts – coming soon →</a>
       </div>
     </div>
   </div>
@@ -774,14 +937,175 @@ def page_rental_landing():
   <div class="wrap">
     <h2 style="font-size:1.6rem">Rental Guides</h2>
     <div class="cat-chips">
-      <a class="chip" href="blog-detail.html">Boom Lift vs Scissor Lift: How to Choose</a>
-      <a class="chip" href="blog-detail.html">Articulated vs Telescopic Boom Lift</a>
-      <a class="chip" href="blog-detail.html">Working Height vs Platform Height</a>
+      {"".join(f'<a class="chip" href="{u}">{t}</a>' for t, u in GUIDE_LINKS)}
     </div>
   </div>
 </section>
 
 {{{{cta:Need a Machine for Your Project?|Tell us the working height, the job and the site location. We'll suggest the right machine and send a quote.}}}}
+'''
+
+
+# ================================================================== RENTAL MAIN CATEGORY (/rental/{main}/)
+# WordPress: taxonomy-machine_type.php for a parent term – content + one category card per child term.
+def page_rental_group(g):
+    global PAGE_LD
+    PAGE_LD = dict(faq=g["faq"])   # build(): BreadcrumbList + FAQPage JSON-LD in <head>
+    soon = g.get("soon")
+    intro = g["intro"].format(n=g["n"], lo=g["lo"], hi=g["hi"])
+    others = [o for o in GROUPS.values() if o["key"] != g["key"]]
+    if soon:
+        qa = quote_attrs("rental", category=QUOTE_CATEGORIES[-1])
+        actions = f'''<a class="btn btn--red" href="contact.html#enquiry" {qa}>Register Interest</a>
+      <a class="btn btn--wa" href="{{{{WA_LINK}}}}">{icon("wa")} WhatsApp Us</a>'''
+        eyebrow = f"Coming soon · {g['range']} working height"
+    else:
+        actions = f'''<a class="btn btn--red" href="contact.html#enquiry" {quote_attrs("rental")}>Get a Quote</a>
+      <a class="btn btn--wa" href="{{{{WA_LINK}}}}">{icon("wa")} WhatsApp</a>
+      <a class="btn btn--ghost-light" href="#types">See the {len(g["cats"])} types</a>'''
+        eyebrow = f"{g['name']} for rent · UAE"
+    hero = f'''<!-- 1. HERO: full-width photo + answer-first intro -->
+<section class="r-hero">
+  {hero_img(g["img"], g["one"] + " for rent in Dubai")}
+  <div class="wrap r-hero-inner">
+    <span class="eyebrow">{eyebrow}</span>
+    <h1>{g["h1"]}</h1>
+    <p class="hero-lead">{intro}</p>
+    <div class="hero-actions">
+      {actions}
+    </div>
+  </div>
+</section>'''
+
+    if soon:
+        types = f'''<!-- 2. COMING SOON: no sub-categories yet (WordPress: term meta status=coming-soon, height_range) -->
+<section class="section" id="types">
+  <div class="wrap">
+    <div class="split-panel split-panel--navy">
+      <span class="eyebrow" style="color:#ff5a45">Coming soon</span>
+      <h2>{g["name"]} from {g["lo"]} to {g["hi"]} Working Height</h2>
+      <p>Tracked spider lifts are joining our rental fleet soon. Register your interest and we'll contact you first with the models, dates and prices – or ask us now which machine in our current fleet suits your site.</p>
+      <div class="hero-actions" style="margin-bottom:0">
+        <a class="btn btn--red" href="contact.html#enquiry" {quote_attrs("rental", category=QUOTE_CATEGORIES[-1])}>Register Interest</a>
+        <a class="btn btn--ghost-light" href="rental-all.html">See our current fleet</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. WHEN TO CHOOSE + BEST USES -->
+<section class="section section--alt">
+  <div class="wrap grid grid-2" style="gap:56px;align-items:start">
+    <div class="split-panel">
+      <h2 style="font-size:1.5rem">Choose a spider lift when…</h2>
+      <ul class="tick-list">{"".join(f"<li>{x}</li>" for x in g["when"]["spider"])}</ul>
+    </div>
+    <div class="content">
+      <h2>Best Uses for {g["name"]}</h2>
+      <ul class="tick-list">{"".join(f"<li>{u}</li>" for u in g["uses"])}</ul>
+    </div>
+  </div>
+</section>'''
+    else:
+        ck, clabel = g["cmp"]
+        rows = "".join(
+            f'<tr><td><a href="{c["file"]}"><strong>{c["name"]}</strong></a><br><span class="small muted">{c["n"]} models</span></td>'
+            f'<td>{spec_span(c["models"], "working_height", "m")}</td><td>{spec_span(c["models"], ck, "m")}</td>'
+            f'<td>{spec_span(c["models"], "capacity", "kg")}</td><td>{" / ".join(sorted({acf(it, "power") for it in c["models"]}))}</td></tr>'
+            for c in g["cats"])
+        panels = []
+        for i, c in enumerate(g["cats"]):
+            navy = i == 1
+            lk = ' style="color:#ff5a45"' if navy else ""
+            panels.append(f'''<div class="split-panel{" split-panel--navy" if navy else ""}">
+        <h3 style="font-size:1.4rem">Choose {c["name"].lower()} when…</h3>
+        <ul class="tick-list">{"".join(f"<li>{x}</li>" for x in g["when"][c["key"]])}</ul>
+        <a class="link-arrow"{lk} href="{c["file"]}">View {c["n"]} {c["menu"].lower()} models →</a>
+      </div>''')
+        types_q = ",".join(c["slug"] for c in g["cats"])
+        types = f'''<!-- 2. SUB-CATEGORY CARDS: each links to /rental/{g["slug"]}/{{sub category}}/ (listing with filters) -->
+<section class="section" id="types">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Choose a type</span>
+      <h2>Types of {g["name"]} We Rent</h2>
+      <p>Open a type to see every machine with working height, {clabel.lower()} and capacity – and filter to the one that fits your job.</p>
+    </div>
+    <div class="tiles tiles--3">
+      {"".join(cat_tile(c) for c in g["cats"])}
+    </div>
+    <p class="mt-24"><a class="link-arrow" href="rental-all.html?m_type={types_q}">Browse all {g["n"]} {g["name"].lower()} with filters →</a></p>
+  </div>
+</section>
+
+<!-- 3. COMPARE THE TYPES: answer-style table, computed from the fleet -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Compare</span>
+      <h2>{g["name"]} Compared</h2>
+      <p>Ranges across the machines in our rental fleet.</p>
+    </div>
+    <div class="table-wrap">
+      <table class="finder">
+        <thead><tr><th>Type</th><th>Working height</th><th>{clabel}</th><th>Capacity</th><th>Power</th></tr></thead>
+        <tbody>{rows}</tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 4. HOW TO CHOOSE + BEST USES -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head section-head--center">
+      <span class="eyebrow">Quick guide</span>
+      <h2>Which {g["one"]} Do I Need?</h2>
+    </div>
+    <div class="grid grid-3 guide-3">
+      {"".join(panels)}
+    </div>
+    <div class="grid grid-2 mt-40" style="gap:56px;align-items:center">
+      <div class="content">
+        <h2>Best Uses for {g["name"]}</h2>
+        <ul class="tick-list">{"".join(f"<li>{u}</li>" for u in g["uses"])}</ul>
+      </div>
+      {media(g["img"] + "-sm", g["one"] + " at work", "ratio-16-9")}
+    </div>
+  </div>
+</section>
+
+{rental_options_html()}'''
+
+    cta = ("{{cta:Register Interest in Spider Lifts|Tell us the working height, the site and when you need it. We'll contact you as soon as our spider lifts arrive.}}"
+           if soon else f"{{{{cta:Get a Quote for {g['name']}|Tell us the working height, site location and dates. We'll confirm the right machine and send your quote.}}}}")
+    return f'''{hero}
+
+{types}
+
+<!-- FAQ (also FAQPage JSON-LD in <head>) -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head"><span class="eyebrow">Questions</span><h2>{g["one"]} Rental Questions</h2></div>
+    {faq_html(g["faq"])}
+  </div>
+</section>
+
+<!-- RELATED: the other main categories, landing page and guides -->
+<section class="section section--alt section--tight">
+  <div class="wrap grid grid-2" style="gap:40px">
+    <div>
+      <h2 style="font-size:1.5rem">Other Rental Machines</h2>
+      <div class="cat-chips">{"".join(f'<a class="chip" href="{o["file"]}">{o["name"]}{" (coming soon)" if o.get("soon") else ""}</a>' for o in others)}<a class="chip" href="rental-all.html">All rental machines</a><a class="chip" href="rental.html">All rental equipment</a></div>
+    </div>
+    <div>
+      <h2 style="font-size:1.5rem">Related Guides</h2>
+      <ul class="tick-list mt-24">{"".join(f'<li><a href="{u}">{t}</a></li>' for t, u in GUIDE_LINKS[:2])}</ul>
+    </div>
+  </div>
+</section>
+
+{cta}
 '''
 
 
@@ -796,8 +1120,8 @@ def page_rental_all():
         ("Working height", "m_height", band_options(RENTAL_BANDS)),
         ("Brand", "m_brand", [(b, BRAND_NAMES[b]) for b in sorted({tax(it, "machine_brand") for it in RENTAL_ITEMS})]),
     ], RENTAL_SORTS)
-    switch = "".join(f'<a class="chip" href="{o["file"]}">{o["name"]} ({o["n"]})</a>' for o in CATS.values())
-    return f'''<!-- 1. COMPACT HEADER: H1 + intro + category chips (listing comes first on this page) -->
+    switch = "".join(f'<a class="chip" href="{g["file"]}">{g["name"]} ({"coming soon" if g.get("soon") else g["n"]})</a>' for g in GROUPS.values())
+    return f'''<!-- 1. COMPACT HEADER: H1 + intro + main-category chips (listing comes first on this page) -->
 <section class="r-hero r-hero--compact">
   {hero_img("cat-articulated", "Boom lifts and scissor lifts for rent in Dubai")}
   <div class="wrap r-hero-inner">
@@ -815,7 +1139,7 @@ def page_rental_all():
   </div>
 </section>
 
-<!-- 2. FULL FLEET LISTING (filter URLs = noindex in WordPress) -->
+<!-- 2. FULL FLEET LISTING (filter URLs: canonical = the clean /rental/all-machines/ URL, never in the sitemap) -->
 <section class="section" id="all-machines" style="padding-top:32px">
   <div class="wrap">
     {listing(fleet)}
@@ -824,8 +1148,9 @@ def page_rental_all():
 '''
 
 
-# ================================================================== RENTAL CATEGORY LISTING
+# ================================================================== RENTAL SUB-CATEGORY LISTING (/rental/{main}/{sub}/)
 def page_rental_category(c):
+    g = c["group"]
     ms = sorted(c["models"], key=lambda it: acf(it, "working_height"))
     skey, stitle, sbands = c["second"]
     brands = Counter(tax(it, "machine_brand") for it in ms)
@@ -838,13 +1163,16 @@ def page_rental_category(c):
         ("Brand", "m_brand", [(b, BRAND_NAMES[b]) for b in sorted(brands)]),
         ("Availability", "m_availability", [("available", "Available now"), ("on-hire", "On hire")]),
     ], RENTAL_SORTS, search=f"Search model, e.g. {short[0]}" if c["search"] else None, tries=tries)
-    switch = "".join(
+    # switcher: the sub-categories of this main category (+ back to the main category page)
+    switch = f'<a class="chip" href="{g["file"]}">← All {g["name"].lower()}</a>' + "".join(
         f'<a class="chip{" chip--active" if o["key"] == c["key"] else ""}" href="{o["file"]}">{o["name"]} ({o["n"]})</a>'
-        for o in CATS.values())
-    others = "".join(f'<a class="chip" href="{o["file"]}">{o["name"]}</a>' for o in CATS.values() if o["key"] != c["key"])
+        for o in g["cats"])
+    others = ("".join(f'<a class="chip" href="{o["file"]}">{o["name"]}</a>' for o in g["cats"] if o["key"] != c["key"])
+              + "".join(f'<a class="chip" href="{o["file"]}">{o["name"]}{" (coming soon)" if o.get("soon") else ""}</a>'
+                        for o in GROUPS.values() if o["key"] != g["key"]))
     choose = "".join(f"<p><strong>{t}:</strong> {x}</p>" for t, x in c["choose"])
     intro = c["intro"].format(n=c["n"], lo=c["lo"], hi=c["hi"])
-    return f'''<!-- 1. COMPACT HEADER: H1 + answer-first intro + category switcher (listing comes first on this page) -->
+    return f'''<!-- 1. COMPACT HEADER: H1 + answer-first intro + sub-category switcher (listing comes first on this page) -->
 <section class="r-hero r-hero--compact">
   {hero_img(c["img"], c["one"] + " for rent in Dubai")}
   <div class="wrap r-hero-inner">
@@ -858,11 +1186,11 @@ def page_rental_category(c):
         <a class="btn btn--wa btn--block" href="{{{{WA_LINK}}}}">{icon("wa")} WhatsApp</a>
       </div>
     </div>
-    <nav class="cat-chips" aria-label="Rental categories">{switch}</nav>
+    <nav class="cat-chips" aria-label="{g["name"]} types">{switch}</nav>
   </div>
 </section>
 
-<!-- 2. LISTING with category-specific filters (filter URLs = noindex in WordPress) -->
+<!-- 2. LISTING with category-specific filters (filter URLs: canonical = the clean category URL, never in the sitemap) -->
 <section class="section" style="padding-top:32px">
   <div class="wrap">
     {listing(ctx)}
@@ -884,18 +1212,7 @@ def page_rental_category(c):
   </div>
 </section>
 
-<!-- 6. RENTAL OPTIONS -->
-<section class="section section--alt section--tight">
-  <div class="wrap">
-    <h2>Rental Options</h2>
-    <div class="grid grid-4 mt-24">
-      <div class="service-block"><div class="icon">{icon("calendar")}</div><h3>Flexible periods</h3><p>Daily, weekly, monthly or long-term hire.</p></div>
-      <div class="service-block"><div class="icon">{icon("truck")}</div><h3>Delivery across the UAE</h3><p>To your site in all seven emirates, as soon as possible.</p></div>
-      <div class="service-block"><div class="icon">{icon("user")}</div><h3>Operator on request</h3><p>Ask for an operator when you book.</p></div>
-      <div class="service-block"><div class="icon">{icon("shield")}</div><h3>Inspected machines</h3><p>Every machine is checked before delivery.</p></div>
-    </div>
-  </div>
-</section>
+{rental_options_html()}
 
 <!-- 7. FAQ -->
 <section class="section">
@@ -905,7 +1222,7 @@ def page_rental_category(c):
   </div>
 </section>
 
-<!-- 8. RELATED: internal links to other categories, landing page and guides -->
+<!-- 8. RELATED: internal links to sibling types, other main categories, landing page and guides -->
 <section class="section section--alt section--tight">
   <div class="wrap grid grid-2" style="gap:40px">
     <div>
@@ -922,7 +1239,7 @@ def page_rental_category(c):
   </div>
 </section>
 
-{{{{cta:Get a Quote for {c["one"].lower().replace("lift", "lift")}s|Tell us the working height, site location and dates. We'll confirm the right model and send your quote.}}}}
+{{{{cta:Get a Quote for {c["one"].lower()}s|Tell us the working height, site location and dates. We'll confirm the right model and send your quote.}}}}
 '''
 
 
@@ -1355,33 +1672,20 @@ def page_sold_detail(s):
 
 # ------------------------------------------------------------------ header / footer
 def header(active):
-    def cur(name):
-        return ' aria-current="page"' if name == active else ""
-    # Same menu items and links as the home page header (HOME_NAV), in this header's own markup/styles.
-    def item(n, u, sub):
-        key = n.lower()
-        if not sub:
-            return f'<li><a href="{u}"{cur(key)}>{n}</a></li>'
-        drop = "".join(f'<li><a href="{su}">{sn}{f"<small>{ss}</small>" if ss else ""}</a></li>' for sn, su, ss in sub)
-        return f'<li class="has-drop"><a href="{u}"{cur(key)}>{n}</a>\n          <ul class="drop">{drop}</ul>\n        </li>'
-    menu = "\n        ".join(item(n, u, sub) for n, u, sub in HOME_NAV)
+    # Same menu as the home page header: menu_html() (styles in assets/css/menu.css, shared by both headers)
     return f'''<div class="mock-note">UI mockup for review · real photos and data from your website · grey boxes = photos still needed</div>
 <header class="site-header">
   <div class="wrap header-inner">
     <a class="logo" href="index.html">
       <img src="assets/img/logo.webp" alt="Cherry Pickers Equipment – The Right Pick for Every Height" width="1024" height="340" class="logo-img">
     </a>
-    <nav class="main-nav" aria-label="Main">
-      <ul>
-        {menu}
-      </ul>
-    </nav>
+    {menu_html(active)}
     <div class="header-actions">
       <a class="header-phone" href="{PHONE_LINK}" aria-label="Call {PHONE}">{icon("phone")}<span>{PHONE}</span></a>
       <a class="icon-btn" href="{WA_LINK}" aria-label="WhatsApp us" target="_blank" rel="noopener">{WA_SVG}</a>
       <a class="btn btn--red btn--sm" href="contact.html#enquiry" {quote_attrs()}>Get a Quote</a>
     </div>
-    <button class="menu-toggle" aria-label="Open menu" aria-expanded="false"><span></span></button>
+    <button class="menu-toggle" type="button" data-menu-open aria-label="Open menu" aria-expanded="false" aria-controls="cpe-menu"><span></span></button>
   </div>
 </header>'''
 
@@ -1397,7 +1701,8 @@ SOCIAL = [
 
 
 def footer():
-    cat_links = "".join(f'<li><a href="{c["file"]}">{c["name"]}</a></li>' for c in CATS.values())
+    cat_links = "".join(f'<li><a href="{g["file"]}">{g["name"]}{" (coming soon)" if g.get("soon") else ""}</a></li>' for g in GROUPS.values())
+    cat_links += '<li><a href="rental-all.html">All rental machines</a></li>'
     social = "".join(f'\n        <a href="{u}" aria-label="{n}" target="_blank" rel="noopener">{icon(k)}</a>' for n, k, u in SOCIAL)
     return f'''<footer class="site-footer">
   <div class="wrap footer-grid">
@@ -1461,7 +1766,6 @@ BREAKDOWN = "+971 56 801 9344"
 BREAKDOWN_LINK = "tel:+971568019344"
 HOME_FONTS = "https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap"
 SITE_FONTS = "https://fonts.googleapis.com/css2?family=Barlow:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap"
-CARET = '<svg class="caret" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>'
 TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
 
 
@@ -1485,10 +1789,27 @@ def home_faq_html():
         for n, (q, a) in enumerate(HOME_FAQ))
 
 
-def home_faq_jsonld():
-    data = {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
-        {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in HOME_FAQ]}
+def jsonld(data):
     return '<script type="application/ld+json">' + json.dumps(data, ensure_ascii=False).replace("</", "<\\/") + "</script>\n"
+
+
+def faq_jsonld(items):
+    """FAQPage structured data – the same Q&As as the visible accordion (answers as plain text)."""
+    return jsonld({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+        {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": re.sub(r"<[^>]+>", "", a)}} for q, a in items]})
+
+
+def home_faq_jsonld():
+    return faq_jsonld(HOME_FAQ)
+
+
+def breadcrumb_jsonld(crumbs, path):
+    """BreadcrumbList for the visible breadcrumbs: Home + crumbs. Flat partial names resolve through LINKS; the last item is this page."""
+    items = [("Home", SITE)]
+    for n, u in crumbs:
+        items.append((n, SITE + (LINKS[u] if u else path.replace("index.html", ""))))
+    return jsonld({"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": i, "name": n, "item": u} for i, (n, u) in enumerate(items, 1)]})
 
 
 def home_rcard(key):
@@ -1540,59 +1861,105 @@ def home_scard(key):
       </article>'''
 
 
-# height ranges as shown on the home page (reference v3)
-HOME_RANGE = {"es": "7.8 – 15.7 m", "rt": "15.1 – 18.2 m", "eb": "13.5 – 20.4 m", "ab": "15.7 – 43.2 m", "tb": "15.7 – 28.2 m"}
-HOME_NAV = [
-    ("Rental", "rental.html", [(c["name"], c["file"], HOME_RANGE[k] + {"es": " · indoor", "rt": " · outdoor"}.get(k, ""))
-                               for k, c in CATS.items()] + [("All rental machines →", "rental-all.html", "")]),
-    ("Sales", "sales.html", [("Used Equipment", "sales-used.html", ""),
-                             ("New Equipment", "sales-new.html", ""), ("Sold Equipment", "sales-sold.html", "")]),
-    ("Services", "services.html", [("AMC", "services-amc.html", "Annual maintenance contracts"),
-                                   ("On-site Repairs", "services-on-site-repairs.html", "Breakdown repair at your site"),
-                                   ("Workshop Services", "services-workshop.html", "Servicing &amp; overhaul in our workshop")]),
-    ("About", "about.html", []),
-    ("Blog", "blog.html", []),
-    ("Contact", "contact.html", []),
-]
+def home_cat(c):
+    """Home fleet grid tile for a rental sub-category ({{homecat:<CATS key>}})."""
+    return (f'<a class="cat" href="{c["file"]}"><div class="cat-img">{img_tag(c["img"] + "-sm", c["one"] + " rental in Dubai")}</div>'
+            f'<div class="cat-body"><h3>{c["name"]}</h3><span class="badge-h">{c["range"]}</span><p>{c["short"]}</p></div></a>')
+
+
+def group_card(g):
+    """About page card for a rental main category ({{groupcard:<GROUPS key>}})."""
+    meta = f"Coming soon · {g['range']}" if g.get("soon") else f"{g['n']} models · {g['range']}"
+    return (f'<a class="cat-card" href="{g["file"]}">{media(g["img"] + "-sm", g["one"])}'
+            f'<div class="cat-card-body"><h3>{g["name"]}</h3><span class="height">{meta}</span></div></a>')
+
+
+# ------------------------------------------------------------------ main menu (shared by both headers)
+# One <nav class="cpe-menu"> for desktop and mobile. Every link is in the HTML on page load; CSS (assets/css/menu.css)
+# hides closed panels, and main.js only toggles classes / aria-expanded.
+#   Desktop (>960px): cascading dropdowns – Rental › Boom Lifts › Telescopic … (hover intent, keyboard, flips left near the edge)
+#   Mobile (<=960px): the same nav is an off-canvas drawer with drill-down panels and a Back button
+# WordPress: wp_nav_menu() with a custom walker that prints this markup (menu items: Rental > Boom Lifts > Telescopic …).
+def nav_tree():
+    rental = []
+    for g in GROUPS.values():
+        note = f"{g['range']} · Coming soon" if g.get("soon") else g["range"]
+        rental.append(dict(name=g["name"], url=g["file"], note=note, overview=f"View all {g['name']} →",
+                           children=[dict(name=c["menu"], url=c["file"], note=c["range"]) for c in g["cats"]]))
+    return [
+        dict(name="Rental", url="rental.html", overview="Rental overview →", children=rental,
+             foot=("All rental machines →", "rental-all.html")),
+        dict(name="Sales", url="sales.html", overview="Sales overview →", children=[
+            dict(name="Used Equipment", url="sales-used.html"), dict(name="New Equipment", url="sales-new.html"),
+            dict(name="Sold Equipment", url="sales-sold.html")]),
+        dict(name="Services", url="services.html", overview="All services →", children=[
+            dict(name="AMC", url="services-amc.html", note="Annual maintenance contracts"),
+            dict(name="On-site Repairs", url="services-on-site-repairs.html", note="Breakdown repair at your site"),
+            dict(name="Workshop Services", url="services-workshop.html", note="Servicing &amp; overhaul in our workshop")]),
+        dict(name="About", url="about.html"),
+        dict(name="Blog", url="blog.html"),
+        dict(name="Contact", url="contact.html"),
+    ]
+
+
+CHEV = '<svg class="cm-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+CHEV_BACK = '<svg class="cm-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+
+
+def menu_items(items, level, parent=None, active=""):
+    out = []
+    for it in items:
+        name, url = it["name"], it["url"]
+        note = f'<small>{it["note"]}</small>' if it.get("note") else ""
+        cur = ' aria-current="page"' if level == 1 and name.lower() == active else ""
+        link = f'<a class="cm-link" href="{url}"{cur}><span>{name}</span>{note}</a>'
+        if not it.get("children"):
+            out.append(f'<li class="cm-item">{link}</li>')
+            continue
+        sid = f"cm-{slug(name)}"
+        back = "Back" if level == 1 else f"Back to {parent}"
+        rows = [f'<li class="cm-item cm-overview"><a class="cm-link" href="{url}">{it["overview"]}</a></li>']
+        rows += menu_items(it["children"], level + 1, name)
+        if it.get("foot"):
+            rows.append(f'<li class="cm-item cm-more"><a class="cm-link" href="{it["foot"][1]}">{it["foot"][0]}</a></li>')
+        out.append(
+            f'<li class="cm-item cm-has-sub">{link}'
+            f'<button class="cm-toggle" type="button" aria-expanded="false" aria-controls="{sid}" aria-label="{name} menu">'
+            f'<span class="cm-tlabel"><span>{name}</span>{note}</span>{CHEV}</button>'
+            f'<div class="cm-sub" id="{sid}"><div class="cm-head"><button class="cm-back" type="button">{CHEV_BACK}{back}</button>'
+            f'<p class="cm-title">{name}</p></div><ul class="cm-list cm-l{level + 1}">{"".join(rows)}</ul></div></li>')
+    return out
+
+
+def menu_html(active=""):
+    return f'''<nav class="cpe-menu" id="cpe-menu" aria-label="Main">
+      <div class="cm-bar"><p class="cm-title">Menu</p><button class="cm-close" type="button" aria-label="Close menu">&times;</button></div>
+      <div class="cm-body"><ul class="cm-list cm-l1">{"".join(menu_items(nav_tree(), 1, active=active))}</ul></div>
+      <div class="cm-foot">
+        <a class="cm-btn cm-btn--call" href="{PHONE_LINK}">{icon("phone")}Call</a>
+        <a class="cm-btn cm-btn--wa" href="{WA_LINK}" target="_blank" rel="noopener">{WA_SVG}WhatsApp</a>
+      </div>
+    </nav>'''
 
 
 def header_home():
-    def dd(items):
-        return "".join(f'<li><a href="{u}">{n}{f"<small>{s}</small>" if s else ""}</a></li>' for n, u, s in items)
-    main = "".join(
-        (f'<li class="has-dd"><a href="{u}">{n} {CARET}</a><ul class="dd">{dd(sub)}</ul></li>' if sub else f'<li><a href="{u}">{n}</a></li>')
-        for n, u, sub in HOME_NAV)
-    drawer = "".join(
-        f'<li><a href="{u}">{n}</a>' + (f'<ul>{"".join(f"<li><a href=\"{su}\">{sn}</a></li>" for sn, su, _ in sub)}</ul>' if sub else "") + "</li>"
-        for n, u, sub in HOME_NAV)
     return f'''<header class="site-hdr" id="hdr">
   <div class="wrap hdr">
     <a class="logo" href="index.html" aria-label="Cherry Pickers Equipment home"><img src="assets/img/logo.webp" alt="Cherry Pickers Equipment – The Right Pick for Every Height" width="1024" height="340"></a>
-    <nav class="main" aria-label="Main">
-      <ul>{main}</ul>
-    </nav>
+    {menu_html()}
     <div class="hdr-cta">
       <a class="hdr-phone" href="{PHONE_LINK}" aria-label="Call {PHONE}">{icon("phone")}<span>{PHONE}</span></a>
       <a class="btn btn-wa btn-icon" href="{WA_LINK}" target="_blank" rel="noopener" aria-label="WhatsApp us">{WA_SVG}</a>
       <a class="btn btn-red btn-sm" href="#enquiry" {quote_attrs()}>Get a Quote</a>
-      <button class="burger" id="burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <button class="burger" id="burger" type="button" data-menu-open aria-label="Open menu" aria-expanded="false" aria-controls="cpe-menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
     </div>
   </div>
-</header>
-<div class="drawer" id="drawer" hidden>
-  <div class="drawer-in" role="dialog" aria-modal="true" aria-label="Menu">
-    <button class="x" id="drawerX" type="button" aria-label="Close menu">&times;</button>
-    <nav aria-label="Mobile">
-      <ul>{drawer}</ul>
-    </nav>
-    <a class="btn btn-red" href="#enquiry" {quote_attrs()}>Get a Quote</a>
-    <a class="btn btn-wa" href="{WA_LINK}" target="_blank" rel="noopener">{WA_SVG} WhatsApp Us</a>
-  </div>
-</div>'''
+</header>'''
 
 
 def footer_home():
-    rent = "".join(f'<li><a href="{c["file"]}">{c["name"]}</a></li>' for c in CATS.values())
+    rent = "".join(f'<li><a href="{g["file"]}">{g["name"]}{" (coming soon)" if g.get("soon") else ""}</a></li>' for g in GROUPS.values())
+    rent += '<li><a href="rental-all.html">All rental machines</a></li><li><a href="rental.html">Rental overview</a></li>'
     social = "".join(f'\n        <a href="{u}" target="_blank" rel="noopener" aria-label="{n}">{icon(k)}</a>' for n, k, u in SOCIAL)
     return f'''<footer class="site-ftr">
   <div class="wrap ft">
@@ -1651,6 +2018,7 @@ PAGE = """<!DOCTYPE html>
 <link href="{fonts}" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/{css}">
 <link rel="stylesheet" href="assets/css/quote-modal.css">
+<link rel="stylesheet" href="assets/css/menu.css">
 {head_extra}{cpe_config}</head>
 <body{body_class}>
 {header}
@@ -1797,6 +2165,9 @@ def render_tokens(html, kind="rental"):
     # home page tokens
     html = re.sub(r"\{\{hrcard:([\w:-]+)\}\}", lambda m: home_rcard(m.group(1)), html)
     html = re.sub(r"\{\{hscard:([\w:-]+)\}\}", lambda m: home_scard(m.group(1)), html)
+    # rental category cards from CATS / GROUPS, e.g. {{homecat:se}} (home fleet grid) / {{groupcard:boom}} (About page)
+    html = re.sub(r"\{\{homecat:(\w+)\}\}", lambda m: home_cat(CATS[m.group(1)]), html)
+    html = re.sub(r"\{\{groupcard:(\w+)\}\}", lambda m: group_card(GROUPS[m.group(1)]), html)
     html = html.replace("{{homefaq}}", home_faq_html())
     html = re.sub(r"\{\{aboutnav:([\w-]+)\}\}", lambda m: about_nav(m.group(1)), html)
     html = re.sub(r"\{\{servicesnav:([\w-]+)\}\}", lambda m: services_nav(m.group(1)), html)
@@ -1872,15 +2243,22 @@ PAGES = [
      f"Browse all {N_RENTAL} scissor lift and boom lift models for rent in Dubai and the UAE. Filter by machine type, working height and brand.",
      "rental", [("Rental", "rental.html"), ("All Machines", "")], page_rental_all),
 ]
-for c in CATS.values():
-    PAGES.append((f"rental/{c['slug']}/index.html",
-                  f"{c['one']} Rental in Dubai & UAE – {c['n']} Models | Cherry Pickers Equipment",
-                  f"Rent {c['name'].lower()} in Dubai and across the UAE: {c['n']} models from {c['lo']} to {c['hi']} working height. Daily, weekly and monthly hire.",
-                  "rental", [("Rental", "rental.html"), (c["name"], "")], (lambda c=c: page_rental_category(c))))
+# main categories (/rental/{main}/), each followed by its sub-categories (/rental/{main}/{sub}/)
+for g in GROUPS.values():
+    _f = dict(n=g["n"], lo=g["lo"], hi=g["hi"])
+    PAGES.append((f"rental/{g['slug']}/index.html", g["title"].format(**_f), g["desc"].format(**_f),
+                  "rental", [("Rental", "rental.html"), (g["name"], "")], (lambda g=g: page_rental_group(g))))
+    for c in g["cats"]:
+        PAGES.append((f"rental/{g['slug']}/{c['slug']}/index.html",
+                      f"{c['one']} Rental in Dubai & UAE – {c['n']} Models | Cherry Pickers Equipment",
+                      f"Rent {c['name'].lower()} in Dubai and across the UAE: {c['n']} models from {c['lo']} to {c['hi']} working height. Daily, weekly and monthly hire.",
+                      "rental", [("Rental", "rental.html"), (g["name"], g["file"]), (c["name"], "")], (lambda c=c: page_rental_category(c))))
+RENTAL_SAMPLE_PATH = "rental/genie-gs-3246/index.html"   # one sample rental detail page (flat machine URL); WordPress renders the rest
 PAGES += [
-    ("rental/electric-scissor-lifts/genie-gs-3246/index.html", "Genie GS-3246 Electric Scissor Lift for Rent in Dubai | Cherry Pickers Equipment",
-     "Rent the Genie GS-3246 electric scissor lift in Dubai: 11.75 m working height, 318 kg capacity.", "rental",
-     [("Rental", "rental.html"), ("Electric Scissor Lifts", CATS["es"]["file"]), ("Genie GS-3246", "")], "rental-detail"),
+    (RENTAL_SAMPLE_PATH, "Genie GS-3246 Electric Scissor Lift for Rent in Dubai | Cherry Pickers Equipment",
+     "Rent the Genie GS-3246 slab electric scissor lift in Dubai: 11.75 m working height, 318 kg capacity.", "rental",
+     [("Rental", "rental.html"), ("Scissor Lifts", GROUPS["scissor"]["file"]), (CATS["se"]["name"], CATS["se"]["file"]), ("Genie GS-3246", "")],
+     "rental-detail"),
     ("sales/index.html", "Used Boom Lifts & Scissor Lifts for Sale – UAE & Export | Cherry Pickers Equipment",
      f"Buy used JLG and Genie boom lifts and scissor lifts. {len(USED)} machines available, {N_SOLD} sold and exported. Contact for price.", "sales", [("Sales", "")], page_sales_landing),
     ("sales/new/index.html", "New Access Equipment for Sale in UAE | Cherry Pickers Equipment",
@@ -1936,7 +2314,8 @@ WA_DEFAULT = f"{WA_HI} I'd like more information about your access equipment."
 WA_MSG = {
     "rental/index.html": f"{WA_HI} I'd like a rental quote.\nMachine type:" + WA_RENT,
     "rental/all-machines/index.html": f"{WA_HI} I'd like a rental quote.\nMachine type:" + WA_RENT,
-    "rental/electric-scissor-lifts/genie-gs-3246/index.html": f"{WA_HI} I'd like a quote to rent the Genie GS-3246 electric scissor lift.\nSite location:\nDates:",
+    RENTAL_SAMPLE_PATH: f"{WA_HI} I'd like a quote to rent the Genie GS-3246 electric scissor lift.\nSite location:\nDates:",
+    "rental/spider-lifts/index.html": f"{WA_HI} I'd like to register interest in renting a spider lift (17 – 36 m)." + WA_RENT,
     "sales/index.html": f"{WA_HI} I'm interested in buying a used machine.\nModel:\nWorking height:\nCountry:",
     "sales/new/index.html": f"{WA_HI} I'm interested in buying a new machine.\nModel:\nCountry:",
     "sales/used/index.html": f"{WA_HI} I'm interested in one of your used machines for sale.\nModel:\nCountry:",
@@ -1951,9 +2330,12 @@ WA_MSG = {
 }
 WA_MSG[SOLD_SAMPLE_PATH] = (f"{WA_HI} I'm looking for a machine like the {SOLD_SAMPLE['title']} you sold.\n"
                             f"Year range:\nCountry:\n{SITE}{SOLD_SAMPLE_PATH.replace('index.html', '')}")
+for _g in GROUPS.values():
+    if not _g.get("soon"):
+        WA_MSG[f"rental/{_g['slug']}/index.html"] = f"{WA_HI} I'd like a quote to rent a {_g['one'].lower()}.\nType:" + WA_RENT
 for _c in CATS.values():
     _m = _c['one'].lower()
-    WA_MSG[f"rental/{_c['slug']}/index.html"] = f"{WA_HI} I'd like a quote to rent {'an' if _m[0] in 'aeiou' else 'a'} {_m}." + WA_RENT
+    WA_MSG[f"rental/{_c['group']['slug']}/{_c['slug']}/index.html"] = f"{WA_HI} I'd like a quote to rent {'an' if _m[0] in 'aeiou' else 'a'} {_m}." + WA_RENT
 
 
 def wa_prefill(html, path):
@@ -1968,11 +2350,18 @@ def build():
             old.unlink()
     # /sales/available/ was renamed to /sales/used/
     shutil.rmtree(OUT / "sales" / "available", ignore_errors=True)
-    built = []
-    global CPE_PAGE
+    # rental categories moved under /rental/{main}/ and machine pages became flat /rental/{slug}/ (old URLs: redirects.csv)
+    for old in OLD_RENTAL_CATS:
+        shutil.rmtree(OUT / "rental" / old, ignore_errors=True)
+    built, sitemap = [], []
+    global CPE_PAGE, PAGE_LD
     for path, title, desc, active, crumbs, body in PAGES:
         CPE_PAGE = None   # set by listing() while the body renders
+        PAGE_LD = None    # set by page functions that want BreadcrumbList + FAQPage JSON-LD
         raw = body() if callable(body) else (SRC / "pages" / f"{body}.html").read_text(encoding="utf-8")
+        head_extra = home_faq_jsonld() if path == "index.html" else ""
+        if PAGE_LD:
+            head_extra += breadcrumb_jsonld(crumbs, path) + faq_jsonld(PAGE_LD["faq"])
         # WordPress: wp_localize_script('cpe-listing', 'CPE', ...) + wp_enqueue_script('cpe-listing', 'assets/js/listing.js')
         cpe_config = f"<script>window.CPE = {json.dumps(CPE_PAGE)};</script>\n" if CPE_PAGE else ""
         scripts = '<script src="assets/js/listing.js" defer></script>\n' if CPE_PAGE else ""
@@ -1992,7 +2381,7 @@ def build():
                            canonical=SITE + path.replace("index.html", ""), robots=robots,
                            fonts=HOME_FONTS if home else SITE_FONTS,
                            css="home.css" if home else "style.css",
-                           head_extra=home_faq_jsonld() if home else "", cpe_config=cpe_config, scripts=scripts,
+                           head_extra=head_extra, cpe_config=cpe_config, scripts=scripts,
                            body_class=' class="home"' if home else "",
                            header=header_home() if home else header(active), crumbs=crumbs_html, body=body_html,
                            footer=footer_home() if home else footer(),
@@ -2003,11 +2392,39 @@ def build():
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(html, encoding="utf-8")
         built.append(path)
+        if not robots:   # noindexed pages stay out of the sitemap; so do filter/search URLs (never listed here)
+            sitemap.append(SITE + path.replace("index.html", ""))
     # reference copy of the popup markup (WordPress: footer.php / Elementor HTML widget)
     part = OUT / "assets" / "partials" / "quote-modal.html"
     part.parent.mkdir(parents=True, exist_ok=True)
     part.write_text(quote_modal() + "\n", encoding="utf-8")
-    print(f"Built {len(built)} pages")
+    write_sitemap(sitemap)
+    n_redirects = write_redirects()
+    print(f"Built {len(built)} pages, sitemap.xml ({len(sitemap)} URLs), redirects.csv ({n_redirects} rows)")
+
+
+# Mockup sitemap of the built pages (WordPress: Rank Math generates it; see WORDPRESS-MAP.md section 8).
+def write_sitemap(urls):
+    today = date.today().isoformat()
+    body = "".join(f"  <url><loc>{html_escape(u)}</loc><lastmod>{today}</lastmod></url>\n" for u in urls)
+    (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n'
+                                     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + body + "</urlset>\n", encoding="utf-8")
+
+
+# 301 map for the rental restructure, as CSV for the Redirection plugin (Tools > Import: source,target,regex,code)
+# or Rank Math > Redirections (enter / import the same source -> destination pairs as 301).
+def write_redirects():
+    rows = [(f"/rental/{old}/", "/" + new) for old, new in OLD_RENTAL_CATS.items()]
+    for it in sorted(RENTAL_ITEMS, key=lambda it: it["slug"]):
+        t = tax(it, "machine_type")
+        rows.append((f"/rental/{OLD_TYPE.get(t, t)}/{it['slug']}/", "/" + machine_path(it)))
+    sources = {s for s, _ in rows}
+    assert not any(t in sources for _, t in rows), "redirect chain"
+    assert len(sources) == len(rows), "duplicate redirect source"
+    with (SRC / "redirects.csv").open("w", encoding="utf-8", newline="") as f:
+        f.write("source,target,regex,code\n")
+        f.writelines(f"{s},{t},0,301\n" for s, t in rows)
+    return len(rows)
 
 
 if __name__ == "__main__":

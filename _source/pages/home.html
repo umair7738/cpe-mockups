@@ -21,11 +21,16 @@
       <div class="ff"><label for="qCat">Category</label>
         <select id="qCat" name="m_type">
           <option value="">All categories</option>
-          <option value="electric-scissor-lifts">Electric Scissor Lifts</option>
-          <option value="rough-terrain-scissor-lifts">Rough Terrain Scissor Lifts</option>
-          <option value="electric-boom-lifts">Electric Boom Lifts</option>
-          <option value="articulated-boom-lifts">Articulated Boom Lifts</option>
-          <option value="telescopic-boom-lifts">Telescopic Boom Lifts</option>
+          <optgroup label="Boom lifts">
+            <option value="telescopic-boom-lifts">Telescopic Boom Lifts</option>
+            <option value="articulated-boom-lifts">Articulated Boom Lifts</option>
+            <option value="electric-boom-lifts">Electric Boom Lifts</option>
+          </optgroup>
+          <optgroup label="Scissor lifts">
+            <option value="slab-electric-scissor-lifts">Slab Electric Scissor Lifts</option>
+            <option value="rough-terrain-electric-scissor-lifts">Rough Terrain Electric Scissor Lifts</option>
+            <option value="diesel-4x4-scissor-lifts">Diesel 4x4 Scissor Lifts</option>
+          </optgroup>
         </select></div>
       <div class="ff"><label for="qHt">Working height</label>
         <select id="qHt" name="m_height"><option value="">Any height</option><option value="0-12">Up to 12 m</option><option value="12-20">12 – 20 m</option><option value="20-30">20 – 30 m</option><option value="30-45">30 m +</option></select></div>
@@ -84,19 +89,20 @@
   </div>
 </section>
 
-<!-- 3. RENTAL FLEET: the 5 category pages + spider lifts (on request). 3 per row from 768px. "Not sure?" tile spans a full row and shows below 1101px only. -->
+<!-- 3. RENTAL FLEET: the 6 sub-category pages (homecat tokens = build.py CATS) + a spider lifts (coming soon) link. 3 per row from 768px. "Not sure?" tile spans a full row and shows below 1101px only. -->
 <section class="sec gray" id="fleet">
   <div class="wrap">
     <div class="sec-head"><div><span class="eyebrow">Our rental fleet</span><h2 class="h2">Access Equipment for Rent in Dubai &amp; UAE</h2><p class="lead">Choose by machine type and working height.</p></div><a class="link-arrow" href="rental-all.html">View all 30 machines →</a></div>
     <div class="cat-grid">
-      <a class="cat" href="rental-electric-scissor-lifts.html"><div class="cat-img">{{img:cat-electric-scissor-sm|Electric scissor lift rental in Dubai}}</div><div class="cat-body"><h3>Electric Scissor Lifts</h3><span class="badge-h">7.8 – 15.7 m</span><p>Quiet, zero-emission. Indoor fit-out, warehouses, malls.</p></div></a>
-      <a class="cat" href="rental-rough-terrain-scissor-lifts.html"><div class="cat-img">{{img:cat-rt-scissor-sm|Rough terrain scissor lift rental in Dubai}}</div><div class="cat-body"><h3>Rough Terrain Scissor Lifts</h3><span class="badge-h">15.1 – 18.2 m</span><p>Big platforms for outdoor sites and uneven ground.</p></div></a>
-      <a class="cat" href="rental-electric-boom-lifts.html"><div class="cat-img">{{img:cat-electric-boom-sm|Electric boom lift rental in Dubai}}</div><div class="cat-body"><h3>Electric Boom Lifts</h3><span class="badge-h">13.5 – 20.4 m</span><p>Reach up and over, indoors or in noise-sensitive areas.</p></div></a>
-      <a class="cat" href="rental-articulated-boom-lifts.html"><div class="cat-img">{{img:cat-articulated-sm|Articulated boom lift rental in Dubai}}</div><div class="cat-body"><h3>Articulated Boom Lifts</h3><span class="badge-h">15.7 – 43.2 m</span><p>Bend around obstacles to reach tight spots.</p></div></a>
-      <a class="cat" href="rental-telescopic-boom-lifts.html"><div class="cat-img">{{img:cat-telescopic-sm|Telescopic boom lift rental in Dubai}}</div><div class="cat-body"><h3>Telescopic Boom Lifts</h3><span class="badge-h">15.7 – 28.2 m</span><p>Maximum straight reach for facades and steel work.</p></div></a>
-      <a class="cat" href="#enquiry" {{quote:rental||Spider lift (coming soon)}}><div class="cat-img">{{img:cat-spider-sm|Tracked spider lift rental in Dubai}}</div><div class="cat-body"><h3>Spider Lifts</h3><span class="badge-h">On request</span><p>Compact tracked booms for tight access, slopes and delicate floors.</p></div></a>
+      {{homecat:tb}}
+      {{homecat:ab}}
+      {{homecat:eb}}
+      {{homecat:se}}
+      {{homecat:re}}
+      {{homecat:dz}}
       <a class="cat cat-ask" href="{{wa:Hi, I'm not sure which machine I need. Can you advise?}}" target="_blank" rel="noopener">{{icon:wa}}<div><h3>Not sure?</h3><p>Send a site photo on WhatsApp – we'll suggest the machine.</p></div></a>
     </div>
+    <p style="margin-top:16px"><a class="link-arrow" href="rental-spider-lifts.html">Spider lifts 17 – 36 m · coming soon →</a> &nbsp; <a class="link-arrow" href="rental-boom-lifts.html">All boom lifts →</a> &nbsp; <a class="link-arrow" href="rental-scissor-lifts.html">All scissor lifts →</a></p>
   </div>
 </section>
 

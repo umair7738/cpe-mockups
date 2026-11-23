@@ -6,7 +6,7 @@
       "title": "Genie GS-1930",
       "slug": "genie-gs-1930",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "slab-electric-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "rental"
       },
@@ -36,7 +36,7 @@
       "title": "Genie GS-1932",
       "slug": "genie-gs-1932",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "slab-electric-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "rental"
       },
@@ -66,7 +66,7 @@
       "title": "Genie GS-2646",
       "slug": "genie-gs-2646",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "slab-electric-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "rental"
       },
@@ -96,7 +96,7 @@
       "title": "Genie GS-3246",
       "slug": "genie-gs-3246",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "slab-electric-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "rental"
       },
@@ -126,7 +126,7 @@
       "title": "JLG 3246ES",
       "slug": "jlg-3246es",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "slab-electric-scissor-lifts",
         "machine_brand": "jlg",
         "listing_status": "rental"
       },
@@ -156,7 +156,7 @@
       "title": "Dingli 1412HD",
       "slug": "dingli-1412hd",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "rough-terrain-electric-scissor-lifts",
         "machine_brand": "dingli",
         "listing_status": "rental"
       },
@@ -186,7 +186,7 @@
       "title": "JLG M4069LE",
       "slug": "jlg-m4069le",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "rough-terrain-electric-scissor-lifts",
         "machine_brand": "jlg",
         "listing_status": "rental"
       },
@@ -216,7 +216,7 @@
       "title": "Dingli 1612HD",
       "slug": "dingli-1612hd",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "rough-terrain-electric-scissor-lifts",
         "machine_brand": "dingli",
         "listing_status": "rental"
       },
@@ -246,7 +246,7 @@
       "title": "Genie GS-4390 RT",
       "slug": "genie-gs-4390-rt",
       "taxonomies": {
-        "machine_type": "rough-terrain-scissor-lifts",
+        "machine_type": "diesel-4x4-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "rental"
       },
@@ -276,7 +276,7 @@
       "title": "Genie GS-5390 RT",
       "slug": "genie-gs-5390-rt",
       "taxonomies": {
-        "machine_type": "rough-terrain-scissor-lifts",
+        "machine_type": "diesel-4x4-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "rental"
       },
@@ -1730,7 +1730,7 @@
       "title": "2007 Genie GS-5390 RT",
       "slug": "2007-genie-gs-5390-rt",
       "taxonomies": {
-        "machine_type": "rough-terrain-scissor-lifts",
+        "machine_type": "diesel-4x4-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "sold"
       },
@@ -1760,7 +1760,7 @@
       "title": "2009 JLG 153-22",
       "slug": "2009-jlg-153-22",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "slab-electric-scissor-lifts",
         "machine_brand": "jlg",
         "listing_status": "sold"
       },
@@ -3950,7 +3950,7 @@
       "title": "2007 Genie GS-5390 RT",
       "slug": "2007-genie-gs-5390-rt-2",
       "taxonomies": {
-        "machine_type": "rough-terrain-scissor-lifts",
+        "machine_type": "diesel-4x4-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "sold"
       },
@@ -5000,7 +5000,7 @@
       "title": "2015 Genie GS-4047",
       "slug": "2015-genie-gs-4047",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "slab-electric-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "sold"
       },
@@ -5030,7 +5030,7 @@
       "title": "2015 Genie GS-4047",
       "slug": "2015-genie-gs-4047-2",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "slab-electric-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "sold"
       },
@@ -5060,7 +5060,7 @@
       "title": "2015 Genie GS-4047",
       "slug": "2015-genie-gs-4047-3",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "slab-electric-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "sold"
       },
@@ -5090,7 +5090,7 @@
       "title": "2014 Genie GS-4047",
       "slug": "2014-genie-gs-4047",
       "taxonomies": {
-        "machine_type": "electric-scissor-lifts",
+        "machine_type": "slab-electric-scissor-lifts",
         "machine_brand": "genie",
         "listing_status": "sold"
       },

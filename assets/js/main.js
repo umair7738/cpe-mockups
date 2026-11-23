@@ -1,13 +1,149 @@
 /* Cherry Pickers Equipment – mockup interactions (small, no libraries) */
 (function () {
-  // Mobile menu
-  var toggle = document.querySelector('.menu-toggle');
-  if (toggle) {
-    toggle.addEventListener('click', function () {
-      var open = document.body.classList.toggle('nav-open');
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  // ---------- Main menu (markup: build.py menu_html(), styles: assets/css/menu.css) ----------
+  // Desktop (>960px): cascading dropdowns with hover intent, flyouts that flip left near the edge, full keyboard support.
+  // Mobile (<=960px): the same <nav> is an off-canvas drawer with drill-down panels and Back buttons.
+  // All links are in the HTML; this script only toggles .is-open classes and aria-expanded.
+  (function () {
+    var nav = document.getElementById('cpe-menu');
+    if (!nav) return;
+    nav.classList.add('cm-ready');
+    var mq = window.matchMedia('(max-width: 960px)');
+    var mobile = function () { return mq.matches; };
+    var openers = Array.prototype.slice.call(document.querySelectorAll('[data-menu-open]'));
+    var closeBtn = nav.querySelector('.cm-close');
+    var DELAY = 200;   // hover intent: ms before a menu closes, or before switching to a sibling's flyout
+    var lastOpener = null;
+
+    var kids = function (el, sel) { return Array.prototype.filter.call(el.children, function (c) { return c.matches(sel); }); };
+    var toggleOf = function (li) { return kids(li, '.cm-toggle')[0]; };
+    var subOf = function (li) { return kids(li, '.cm-sub')[0]; };
+    var visible = function (el) { return !!(el && el.getClientRects().length); };
+    var rows = function (ul) { return kids(ul, 'li').filter(visible); };
+    // focus target of a row: its link, or (mobile, rows with a sub-menu) the toggle button
+    var entry = function (li) { var a = kids(li, '.cm-link')[0]; return visible(a) ? a : toggleOf(li); };
+    var firstRow = function (li) { return rows(subOf(li).querySelector('.cm-list'))[0]; };
+
+    var setOpen = function (li, on) {
+      clearTimeout(li.cmTimer);
+      li.classList.toggle('is-open', on);
+      var t = toggleOf(li);
+      if (t) t.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (!on) Array.prototype.forEach.call(li.querySelectorAll('.cm-item.is-open'), function (x) { setOpen(x, false); });
+    };
+    var siblingOpen = function (li) { return kids(li.parentNode, '.is-open').some(function (x) { return x !== li; }); };
+    var closeSiblings = function (li) { kids(li.parentNode, '.is-open').forEach(function (x) { if (x !== li) setOpen(x, false); }); };
+    var closeAll = function () { Array.prototype.forEach.call(nav.querySelectorAll('.cm-l1 > .is-open'), function (x) { setOpen(x, false); }); };
+    // desktop flyouts open to the right; to the left when there is no room
+    var place = function (li) {
+      li.classList.remove('cm-flip');
+      if (mobile() || li.parentNode.classList.contains('cm-l1')) return;
+      if (li.getBoundingClientRect().right + subOf(li).offsetWidth + 16 > document.documentElement.clientWidth) li.classList.add('cm-flip');
+    };
+    var open = function (li) {
+      closeSiblings(li);
+      place(li);
+      if (mobile()) { var panel = li.parentNode.closest('.cm-sub'); if (panel) panel.scrollTop = 0; }
+      setOpen(li, true);
+    };
+
+    // ---- desktop: hover intent (mouse only; touch and pen use the toggle buttons)
+    Array.prototype.forEach.call(nav.querySelectorAll('.cm-has-sub'), function (li) {
+      li.addEventListener('pointerenter', function (e) {
+        if (e.pointerType !== 'mouse' || mobile()) return;
+        clearTimeout(li.cmTimer);
+        if (li.classList.contains('is-open')) return;
+        // a sibling's menu is open: wait, so a diagonal move towards that flyout doesn't switch menus
+        li.cmTimer = setTimeout(function () { open(li); }, siblingOpen(li) ? DELAY : 40);
+      });
+      li.addEventListener('pointerleave', function (e) {
+        if (e.pointerType !== 'mouse' || mobile()) return;
+        clearTimeout(li.cmTimer);
+        li.cmTimer = setTimeout(function () { setOpen(li, false); }, DELAY);
+      });
     });
-  }
+
+    // ---- clicks: toggles (desktop + mobile), Back, close, links
+    nav.addEventListener('click', function (e) {
+      var t = e.target.closest('.cm-toggle');
+      if (t) {
+        var li = t.parentNode;
+        if (li.classList.contains('is-open')) setOpen(li, false);
+        else {
+          open(li);
+          if (mobile()) subOf(li).querySelector('.cm-back').focus({ preventScroll: true });
+        }
+        return;
+      }
+      var back = e.target.closest('.cm-back');
+      if (back) { var p = back.closest('.cm-item'); setOpen(p, false); toggleOf(p).focus({ preventScroll: true }); return; }
+      if (e.target.closest('.cm-close')) { closeDrawer(true); return; }
+      if (e.target.closest('a') && mobile()) closeDrawer(false);
+    });
+    document.addEventListener('click', function (e) {
+      if (nav.contains(e.target) || e.target.closest('[data-menu-open]')) return;
+      if (mobile()) closeDrawer(false); else closeAll();
+    });
+
+    // ---- keyboard
+    nav.addEventListener('keydown', function (e) {
+      var li = e.target.closest('li');
+      if (e.key === 'Escape') {
+        var all = nav.querySelectorAll('.cm-item.is-open');
+        var openLi = e.target.closest('.cm-item.is-open') || (mobile() && all.length ? all[all.length - 1] : null);
+        if (openLi) { setOpen(openLi, false); toggleOf(openLi).focus(); e.preventDefault(); }
+        else if (mobile()) closeDrawer(true);
+        return;
+      }
+      if (mobile() || !li) return;
+      var ul = li.parentNode, top = ul.classList.contains('cm-l1'), hasSub = li.classList.contains('cm-has-sub');
+      var list = rows(ul), i = list.indexOf(li);
+      var go = function (x) { if (x) { entry(x).focus(); e.preventDefault(); } };
+      if (e.key === 'ArrowDown') {
+        if (top) { if (hasSub) { open(li); go(firstRow(li)); } }
+        else go(list[(i + 1) % list.length]);
+      } else if (e.key === 'ArrowUp') {
+        if (!top) go(list[(i - 1 + list.length) % list.length]);
+      } else if (e.key === 'ArrowRight') {
+        if (top) go(list[(i + 1) % list.length]);
+        else if (hasSub) { open(li); go(firstRow(li)); }
+      } else if (e.key === 'ArrowLeft') {
+        if (top) go(list[(i - 1 + list.length) % list.length]);
+        else {
+          var parent = ul.closest('.cm-item');
+          if (parent && !parent.parentNode.classList.contains('cm-l1')) { setOpen(parent, false); entry(parent).focus(); e.preventDefault(); }
+        }
+      }
+    });
+    // desktop: moving focus to another item closes the other menus at that level; leaving the nav closes all
+    nav.addEventListener('focusin', function (e) {
+      if (mobile()) return;
+      for (var li = e.target.closest('.cm-item'); li; li = li.parentNode.closest('.cm-item')) closeSiblings(li);
+    });
+    nav.addEventListener('focusout', function (e) { if (!mobile() && !nav.contains(e.relatedTarget)) closeAll(); });
+
+    // ---- mobile drawer
+    var setOpeners = function (on) { openers.forEach(function (b) { b.setAttribute('aria-expanded', on ? 'true' : 'false'); }); };
+    var openDrawer = function (btn) {
+      lastOpener = btn;
+      closeAll();
+      nav.classList.add('is-open');
+      document.body.classList.add('menu-open');
+      setOpeners(true);
+      closeBtn.focus({ preventScroll: true });
+    };
+    var closeDrawer = function (focusBack) {
+      if (!nav.classList.contains('is-open')) return;
+      nav.classList.remove('is-open');
+      document.body.classList.remove('menu-open');
+      setOpeners(false);
+      setTimeout(function () { if (!nav.classList.contains('is-open')) closeAll(); }, 260);  // reset panels after the slide-out
+      if (focusBack && lastOpener) lastOpener.focus();
+    };
+    openers.forEach(function (b) { b.addEventListener('click', function () { openDrawer(b); }); });
+    var onMq = function () { closeAll(); closeDrawer(false); };
+    if (mq.addEventListener) mq.addEventListener('change', onMq); else mq.addListener(onMq);
+  })();
 
   // Machine listings (filters, search, sort, pagination, filter drawer) live in listing.js.
 
@@ -67,29 +203,6 @@
     var onScroll = function () { hdr.classList.toggle('shrink', window.scrollY > 40); };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
-  })();
-
-  // ---------- Drawer menu (below 961px) ----------
-  (function () {
-    var drawer = document.getElementById('drawer'), burger = document.getElementById('burger'), x = document.getElementById('drawerX');
-    if (!drawer || !burger || !x) return;
-    var open = function () {
-      drawer.hidden = false;
-      document.body.classList.add('drawer-open');
-      burger.setAttribute('aria-expanded', 'true');
-      x.focus();
-    };
-    var close = function (focusBack) {
-      if (drawer.hidden) return;
-      drawer.hidden = true;
-      document.body.classList.remove('drawer-open');
-      burger.setAttribute('aria-expanded', 'false');
-      if (focusBack) burger.focus();
-    };
-    burger.addEventListener('click', open);
-    x.addEventListener('click', function () { close(true); });
-    drawer.addEventListener('click', function (e) { if (e.target === drawer || e.target.closest('a')) close(false); });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(true); });
   })();
 
   // ---------- Project slider + lightbox ----------
@@ -165,11 +278,12 @@
     // Working-height options per category (values are "min-max" in metres)
     var HT = {
       '': [['0-12', 'Up to 12 m'], ['12-20', '12 – 20 m'], ['20-30', '20 – 30 m'], ['30-45', '30 m +']],
-      'electric-scissor-lifts': [['0-10', 'Up to 10 m'], ['10-12', '10 – 12 m'], ['12-14', '12 – 14 m'], ['14-16', '14 – 15.7 m']],
-      'rough-terrain-scissor-lifts': [['15-16', '15 – 16 m'], ['16-18', '16 – 18 m'], ['18-19', '18 m +']],
-      'electric-boom-lifts': [['13-16', '13.5 – 16 m'], ['16-18', '16 – 18 m'], ['18-21', '18 – 20.4 m']],
+      'telescopic-boom-lifts': [['15-20', '15.7 – 20 m'], ['20-25', '20 – 25 m'], ['25-29', '25 – 28.2 m']],
       'articulated-boom-lifts': [['15-20', '15.7 – 20 m'], ['20-26', '20 – 26 m'], ['26-35', '26 – 35 m'], ['35-44', '35 – 43.2 m']],
-      'telescopic-boom-lifts': [['15-20', '15.7 – 20 m'], ['20-25', '20 – 25 m'], ['25-29', '25 – 28.2 m']]
+      'electric-boom-lifts': [['13-16', '13.5 – 16 m'], ['16-18', '16 – 18 m'], ['18-21', '18 – 20.4 m']],
+      'slab-electric-scissor-lifts': [['0-10', 'Up to 10 m'], ['10-12', '10 – 11.8 m']],
+      'rough-terrain-electric-scissor-lifts': [['13-14', '13.8 – 14 m'], ['14-16', '14 – 15.7 m']],
+      'diesel-4x4-scissor-lifts': [['15-16', '15 – 16 m'], ['16-18', '16 – 18 m'], ['18-19', '18 m +']]
     };
     var qW = document.getElementById('qWant'), qC = document.getElementById('qCat'), qH = document.getElementById('qHt');
     var fillHt = function () {

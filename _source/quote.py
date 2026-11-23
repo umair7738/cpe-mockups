@@ -19,8 +19,10 @@ PHONE = "+971 56 101 8428"
 PHONE_LINK = "tel:+971561018428"
 WA_NUMBER = "971561018428"
 
-CATEGORIES = ["Electric scissor lift", "Rough terrain scissor lift", "Electric boom lift",
-              "Articulated boom lift", "Telescopic boom lift", "Spider lift (coming soon)"]
+# Rental sub-categories (= build.py CATS[...]["one"].capitalize()), boom types then scissor types. Spider must stay last ([-1]).
+CATEGORIES = ["Telescopic boom lift", "Articulated boom lift", "Electric boom lift",
+              "Slab electric scissor lift", "Rough terrain electric scissor lift", "Diesel 4x4 scissor lift",
+              "Spider lift (coming soon)"]
 EMIRATES = ["Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Ras Al Khaimah", "Fujairah", "Umm Al Quwain"]
 PERIODS = ["Daily", "Weekly", "Monthly", "Long-term", "Not sure"]
 SERVICES = ["AMC – annual maintenance contract", "On-site repair", "Workshop service"]
