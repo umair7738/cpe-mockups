@@ -839,13 +839,6 @@ def page_rental_category(c):
     switch = "".join(
         f'<a class="chip{" chip--active" if o["key"] == c["key"] else ""}" href="{o["file"]}">{o["name"]} ({o["n"]})</a>'
         for o in CATS.values())
-    scissor = c["key"] in ("es", "rt")
-    head = "<th>Model</th><th>Working height</th>" + ("<th>Platform height</th>" if scissor else "<th>Outreach</th>") + "<th>Capacity</th><th>Machine weight</th><th>Power</th>"
-    trs = "".join(
-        f'<tr><td><a href="{machine_href(it)}"><strong>{acf(it, "model")}</strong></a></td><td>{acf(it, "working_height"):g} m</td>'
-        f'<td>{acf(it, "platform_height" if scissor else "outreach"):g} m</td><td>{acf(it, "capacity")} kg</td>'
-        f'<td>{acf(it, "weight"):,} kg</td><td>{acf(it, "power")}</td></tr>'
-        for it in ms)
     others = "".join(f'<a class="chip" href="{o["file"]}">{o["name"]}</a>' for o in CATS.values() if o["key"] != c["key"])
     choose = "".join(f"<p><strong>{t}:</strong> {x}</p>" for t, x in c["choose"])
     intro = c["intro"].format(n=c["n"], lo=c["lo"], hi=c["hi"])
@@ -871,14 +864,6 @@ def page_rental_category(c):
 <section class="section" style="padding-top:32px">
   <div class="wrap">
     {listing(ctx)}
-  </div>
-</section>
-
-<!-- 3. COMPARE TABLE (from your live Equipment Hire data) -->
-<section class="section section--alt">
-  <div class="wrap">
-    <div class="section-head"><h2>Compare {c["one"]} Models</h2></div>
-    <div class="table-wrap"><table><thead><tr>{head}</tr></thead><tbody>{trs}</tbody></table></div>
   </div>
 </section>
 
