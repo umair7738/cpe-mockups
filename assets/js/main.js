@@ -168,16 +168,58 @@
     showPosts();
   }
 
-  // Gallery thumbnails: swap the main photo
-  document.querySelectorAll('.gallery-thumbs button[data-src]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var wrap = btn.closest('.gallery');
-      wrap.querySelectorAll('.gallery-thumbs button').forEach(function (b) { b.classList.remove('active'); });
+  // Detail gallery: thumbnails, prev/next arrows on the main photo, swipe (touch) and arrow keys.
+  // Only thumbnails with a real photo (data-src) are slides; grey placeholder slots are skipped.
+  document.querySelectorAll('.gallery').forEach(function (wrap) {
+    var main = wrap.querySelector('.gallery-main');
+    var img = main && main.querySelector('img');
+    var thumbs = Array.prototype.slice.call(wrap.querySelectorAll('.gallery-thumbs button[data-src]'));
+    if (!img || !thumbs.length) return;
+    var cur = Math.max(0, thumbs.findIndex(function (b) { return b.classList.contains('active'); }));
+    var count;
+    var show = function (i) {
+      cur = (i + thumbs.length) % thumbs.length;
+      var btn = thumbs[cur], t = btn.querySelector('img');
+      wrap.querySelectorAll('.gallery-thumbs button').forEach(function (b) { b.classList.remove('active'); b.removeAttribute('aria-current'); });
       btn.classList.add('active');
-      var main = wrap.querySelector('.gallery-main img');
-      var thumb = btn.querySelector('img');
-      if (main) { main.src = btn.getAttribute('data-src'); if (thumb) main.alt = thumb.alt; }
+      btn.setAttribute('aria-current', 'true');
+      img.src = btn.getAttribute('data-src');
+      if (t) img.alt = t.alt;
+      if (count) count.textContent = (cur + 1) + ' / ' + thumbs.length;
+    };
+    thumbs.forEach(function (btn, i) { btn.addEventListener('click', function () { show(i); }); });
+    if (thumbs.length < 2) return;
+
+    var arrow = function (dir, label, path) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'gallery-nav gallery-nav--' + dir;
+      b.setAttribute('aria-label', label);
+      b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="' + path + '"/></svg>';
+      b.addEventListener('click', function () { show(cur + (dir === 'next' ? 1 : -1)); });
+      main.appendChild(b);
+    };
+    arrow('prev', 'Previous photo', 'M15 18l-6-6 6-6');
+    arrow('next', 'Next photo', 'M9 6l6 6-6 6');
+    count = document.createElement('span');
+    count.className = 'gallery-count';
+    count.setAttribute('aria-live', 'polite');
+    main.appendChild(count);
+    show(cur);
+
+    // arrow keys while focus is anywhere in the gallery
+    wrap.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); show(cur + (e.key === 'ArrowRight' ? 1 : -1)); }
     });
+    // horizontal swipe on the main photo (vertical moves still scroll the page)
+    var x0 = null, y0 = 0;
+    main.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+    main.addEventListener('touchend', function (e) {
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) show(cur + (dx < 0 ? 1 : -1));
+      x0 = null;
+    }, { passive: true });
   });
 
   // About > What we do: cards are white; navy shows on hover / keyboard focus (CSS).
