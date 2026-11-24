@@ -47,7 +47,6 @@ LINKS = {
     "sales-used.html": "sales/used/",
     "sales-available.html": "sales/used/",  # alias for old partial links
     "sales-sold.html": "sales/sold/",
-    "sale-detail.html": "sales/used/2010-jlg-600aj/",
     "services.html": "services/",
     "maintenance-repair.html": "services/maintenance-repair/",
     "services-amc.html": "services/amc/",
@@ -337,26 +336,48 @@ def band(v, bands):
 
 # ------------------------------------------------------------------ per-machine detail pages (flat token -> folder URL)
 # machine-<id>.html -> the machine's permalink (WordPress: get_permalink()):
-#   rental -> rental/<slug>/                    e.g. rental/genie-s-65/ (category only in the breadcrumbs)
-#   used   -> sales/used/<slug>/                e.g. sales/used/2011-jlg-860sj/
-#   sold   -> sales/sold/<slug>/                e.g. sales/sold/2015-jlg-860sj/
+#   rental        -> rental/<slug>/                               e.g. rental/genie-s-65/ (category only in the breadcrumbs)
+#   used/new/sold -> sales/<year>-<brand>-<model>-<stock id>/     e.g. sales/2010-jlg-600aj-cp112/
+# Sales URLs carry no status, so a machine keeps its URL when it sells (used -> sold): no redirect needed.
+# The stock ID keeps every sales URL unique (same model + year sold several times).
+def stock_id(it):
+    """ACF stock_no as a URL segment. Not recorded yet for any machine -> mockup placeholder 'cp' + post ID."""
+    return slug(acf(it, "stock_no") or f"cp{it['id']}")
+
+
+def sales_slug(it):
+    """{year}-{brand}-{model}-{stock id}, e.g. 2010-jlg-600aj-cp112 (WordPress: post_name set on save)."""
+    brand = tax(it, "machine_brand")
+    model = slug(acf(it, "model"))
+    model = model[len(brand) + 1:] if model.startswith(brand + "-") else model
+    return f"{acf(it, 'year')}-{brand}-{model}-{stock_id(it)}"
+
+
 def machine_path(it):
-    st = tax(it, "listing_status")
-    if st == "rental":
+    if tax(it, "listing_status") == "rental":
         return f"rental/{it['slug']}/"
-    return f"sales/{st}/{it['slug']}/"
+    return f"sales/{sales_slug(it)}/"
 
 
 def machine_href(it):
     return f"machine-{it['id']}.html"
 
 
+# The mockup renders each detail template ONCE, for a sample machine. WordPress renders the same template for every
+# machine at its own permalink (post_name in the DB). In the mockup, every card's Details link opens its template's sample.
+DETAIL_SAMPLE = {
+    "rental": BY_KEY["rental:genie-gs-3246"],
+    "used": BY_KEY["used:2010-jlg-600aj"],
+    "sold": next(it for it in SOLD if acf(it, "model") == "JLG 860SJ" and acf(it, "year") == 2015
+                 and acf(it, "sold_to") and acf(it, "sold_date")),
+}
 for _it in MACHINES:
-    LINKS[machine_href(_it)] = machine_path(_it)
-# The mockup builds one sample sold detail page (like the one rental and one used-sale sample); WordPress renders the rest.
-SOLD_SAMPLE = next(it for it in SOLD if acf(it, "model") == "JLG 860SJ" and acf(it, "year") == 2015
-                   and acf(it, "sold_to") and acf(it, "sold_date"))
-SOLD_SAMPLE_PATH = machine_path(SOLD_SAMPLE) + "index.html"
+    LINKS[machine_href(_it)] = machine_path(DETAIL_SAMPLE.get(tax(_it, "listing_status"), DETAIL_SAMPLE["used"]))
+LINKS["sale-detail.html"] = machine_path(BY_KEY["used:2010-jlg-600aj"])
+# sales machine URLs share /sales/ with the listing pages; a year-first slug can never be one of them
+_sales = [machine_path(it) for it in MACHINES if tax(it, "listing_status") != "rental"]
+assert len(set(_sales)) == len(_sales), "two sales machines share a URL – check stock_no"
+assert not {p.split("/")[1] for p in _sales} & {"new", "used", "sold"}, "sales machine URL clashes with a listing page"
 SLUG_CAT = {c["slug"]: c for c in CATS.values()}
 
 
@@ -1670,6 +1691,311 @@ def page_sold_detail(s):
 '''
 
 
+# ------------------------------------------------------------------ single-machine.php (rental / used)
+# One reusable template per listing status, rendered for EVERY machine at its permalink (machine_path):
+#   rental -> rental/<slug>/   used -> sales/used/<slug>/   (sold -> sales/sold/<slug>/ : page_sold_detail above)
+# Everything comes from machines.json; text in [brackets] is for the content team to fill per machine.
+
+# Extra photos per machine (WordPress: an ACF gallery field). Machines not listed show their main photo + grey slots.
+GALLERY = {
+    "used:2010-jlg-600aj": [("s-600aj-1", "side view"), ("s-600aj-2", "rear view"), ("s-600aj-3", "boom"),
+                            ("s-600aj-4", "platform"), ("s-600aj-hours", "hour meter")],
+}
+
+
+def _photo(name):
+    """Full-size photo when we have one, else the -sm file."""
+    return name if (IMG / f"{name}.webp").exists() else name + "-sm"
+
+
+def detail_gallery(photos, main_alt, scissor=False, fit="", slots=5):
+    """Gallery for a detail page. photos = [(image name, thumb alt)]; the first is the main photo (LCP, eager).
+    Empty slots up to `slots` are grey placeholders (photos still needed)."""
+    ph = " ph--scissor" if scissor else ""
+    if photos:
+        main = media(_photo(photos[0][0]), main_alt, "gallery-main" + fit, True)
+    else:
+        main = f'<div class="ph gallery-main ph--req{ph}" data-label="Photos on request"></div>'
+    thumbs = []
+    for i, (name, alt) in enumerate(photos):
+        act = ' class="active"' if i == 0 else ""
+        thumbs.append(f'<button{act} data-src="assets/img/{_photo(name)}.webp">{media(name + "-sm", alt)}</button>')
+    thumbs += [f'<button><div class="ph{ph}" data-label="Photo {n}"></div></button>' for n in range(len(photos) + 1, slots + 1)]
+    return f'''{main}
+      <div class="gallery-thumbs">
+        {(chr(10) + "        ").join(thumbs)}
+      </div>'''
+
+
+def _an(word):
+    """'a' / 'an' before a word or a number as it is read aloud (an 11.75 m, an 8 m, a 15.7 m)."""
+    w = str(word).lower()
+    return "an" if w[0] in "aeiou8" or (w[:2] in ("11", "18") and not w[:3].isdigit()) else "a"
+
+
+def _rows(rows):
+    return "".join(f"<tr><th>{k}</th><td>{v}</td></tr>" for k, v in rows)
+
+
+def _faq(qas):
+    return "".join(f'<details{" open" if i == 0 else ""}><summary><h3>{q}</h3></summary><div><p>{a}</p></div></details>'
+                   for i, (q, a) in enumerate(qas))
+
+
+def page_rental_detail(it):
+    c = SLUG_CAT[tax(it, "machine_type")]
+    g = c["group"]
+    m = acf(it, "model")
+    short = m.split(" ", 1)[1]          # 'Genie GS-3246' -> 'GS-3246'
+    one = c["one"]
+    wh, ph, out, cap, wt, pw = (acf(it, k) for k in ("working_height", "platform_height", "outreach", "capacity", "weight", "power"))
+    scissor = g["slug"] == "scissor-lifts"
+    img = acf(it, "image")
+    fit = " contain" if img in CONTAIN else ""
+    photos = GALLERY.get(f"rental:{it['slug']}") or [(img, f"{m} front view"), (c["img"], f"{one.capitalize()} on site")]
+    cat_q = one.capitalize()
+
+    mid = (f"<div><strong>{ph:g} m</strong>Platform height</div>" if ph else f"<div><strong>{out:g} m</strong>Horizontal outreach</div>")
+    if pw == "Electric":
+        power_txt = "It runs on batteries – quiet and with no exhaust – so it suits indoor work and enclosed sites such as warehouses, malls, hotels and factories."
+    else:
+        power_txt = "It is diesel-powered for outdoor sites, construction work and uneven ground."
+    reach_txt = f" It reaches {out:g} m out horizontally, so you can work over obstacles from one position." if out else ""
+    spec = [("Working height", f"{wh:g} m")]
+    if ph:
+        spec.append(("Platform height", f"{ph:g} m"))
+    if out:
+        spec.append(("Horizontal outreach", f"{out:g} m"))
+    spec += [("Safe working load", f"{cap} kg"), ("Machine weight", f"{wt:,} kg"),
+             ("Platform size", "[from spec sheet]"),
+             ("Stowed width", f"{acf(it, 'width'):g} m" if acf(it, "width") else "[from spec sheet]"),
+             ("Power", "Electric (battery)" if pw == "Electric" else pw), ("Indoor / outdoor", "[from spec sheet]")]
+    where = "platform" if scissor else "basket"
+    faq = [(f"How many people can work on the {short} {where}?",
+            f"[Your answer – based on the {cap} kg safe working load and the manufacturer's rating.]")]
+    if scissor:
+        faq.append((f"Can the {short} fit through a standard door?", "[Your answer – add the stowed width from the spec sheet.]"))
+    else:
+        faq.append((f"How far can the {short} reach?",
+                    f"Up to {wh:g} m working height and {out:g} m horizontal outreach. [Add: ground conditions and set-up space it needs.]"))
+
+    # similar: same sub-category (closest working height first), then the rest of the main category
+    pool = [x for x in RENTAL_ITEMS if x is not it]
+    near = lambda x: abs(acf(x, "working_height") - wh)
+    similar = sorted((x for x in pool if SLUG_CAT[tax(x, "machine_type")] is c), key=near)[:3]
+    if len(similar) < 3:
+        similar += sorted((x for x in pool if x not in similar and SLUG_CAT[tax(x, "machine_type")]["group"] is g), key=near)[:3 - len(similar)]
+
+    return f'''<!-- 1. TOP AREA: everything to decide in one view. First photo = LCP (no lazy). -->
+<section>
+  <div class="wrap detail-top">
+    <div class="gallery">
+      {detail_gallery(photos, f"{m} {one.lower()} for rent in Dubai", scissor, fit)}
+      <p class="small muted" style="margin-top:8px">Add 4–6 real photos per machine: front, side, platform raised, controls, on site.</p>
+    </div>
+    <div class="detail-info">
+      {STATUS[acf(it, "availability")]}
+      <h1>{m} {one} for Rent</h1>
+      <p class="sub">{one} · Dubai &amp; all UAE emirates</p>
+      <div class="key-specs">
+        <div><strong>{wh:g} m</strong>Working height</div>
+        {mid}
+        <div><strong>{cap} kg</strong>Safe working load</div>
+        <div><strong>{pw}</strong>Power</div>
+      </div>
+      <div class="detail-actions">
+        <a class="btn btn--red btn--block" href="contact.html#enquiry" {quote_attrs("rental", m, cat_q)}>Get a Quote for This Machine</a>
+        <div class="row">
+          <a class="btn btn--wa" href="{{{{WA_LINK}}}}" style="justify-content:center">{icon("wa")} WhatsApp</a>
+          <a class="btn btn--navy" href="{{{{PHONE_LINK}}}}" style="justify-content:center">{icon("phone")} Call</a>
+        </div>
+      </div>
+      <div class="assure">
+        <ul>
+          <li>Daily, weekly, monthly or long-term hire</li>
+          <li>Delivery across all seven emirates</li>
+          <li>Operator on request</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--alt" style="padding-top:56px">
+  <div class="wrap two-col two-col--quote">
+    <div class="content">
+      <!-- 2. ABOUT THIS MACHINE: your own words, 80–150 words -->
+      <h2>About the {m}</h2>
+      <p>The {m} is {_an(one)} {one.lower()} with {_an(f"{wh:g}")} {wh:g} m working height and a {cap} kg safe working load. {power_txt}{reach_txt} [Add 2–3 lines in your own words: typical jobs your customers use it for in the UAE.]</p>
+
+      <!-- 3. FULL SPECIFICATIONS -->
+      <h2>Full Specifications</h2>
+      <div class="table-wrap">
+        <table class="spec-table">
+          <tbody>{_rows(spec)}</tbody>
+        </table>
+      </div>
+      <p class="mt-24"><a class="link-arrow" href="#">{icon("file")} Download manufacturer spec sheet (PDF)</a></p>
+
+      <!-- 4. RENTAL TERMS -->
+      <h2>Rental Terms</h2>
+      <ul class="tick-list">
+        <li>Hire periods: daily, weekly, monthly and long-term</li>
+        <li>Delivery and collection across all seven emirates</li>
+        <li>Machine inspected before delivery</li>
+        <li>Operator available on request</li>
+        <li>[What's included – e.g. charger, harness]</li>
+      </ul>
+
+      <!-- 5. QUESTIONS -->
+      <h2>Questions About the {short}</h2>
+      <div class="faq">
+        {_faq(faq)}
+      </div>
+    </div>
+    <!-- Sticky quote form on desktop (1024px+). Below that it is hidden: the Get a Quote button opens the popup
+         and the shared enquiry section at the bottom of the page is the inline form. -->
+    <aside class="side-box side-box--quote" aria-labelledby="qs-heading">
+      <h3 id="qs-heading">Rent the {short}</h3>
+      <p class="small muted">Tell us your site location and dates.</p>
+      <form class="qf" data-quote-form="inline" novalidate>{quote_inline("qs-", "rental", m, cat_q, False)}</form>
+    </aside>
+  </div>
+</section>
+
+<!-- 6. SIMILAR MACHINES -->
+<section class="section">
+  <div class="wrap">
+    <div class="flex-between section-head" style="max-width:none"><h2 class="mt-0">Similar Machines</h2><a class="link-arrow" href="{c["file"]}">All {c["name"].lower()} →</a></div>
+    <div class="grid grid-3">
+      {"".join(machine_card(x) for x in similar)}
+    </div>
+  </div>
+</section>
+'''
+
+
+def page_used_detail(it):
+    y, m, origin = acf(it, "year"), acf(it, "model"), acf(it, "origin")
+    mtype = tax(it, "machine_type")
+    tname = TYPES[mtype][1]
+    name = f"{y} {m}"
+    wh, hours, stock = acf(it, "working_height"), acf(it, "hours"), acf(it, "stock_no")
+    img = acf(it, "image")
+    photos = GALLERY.get(f"used:{it['slug']}") or ([(img, f"{m} side view")] if img else [])
+    photos = [(n, a if a.startswith(m) else f"{m} {a}") for n, a in photos]
+    rent = MODEL_RENT.get(m)
+
+    spec = [("Make / model", m), ("Type", tname.capitalize()), ("Year", y), ("Machine origin", origin)]
+    if rent:
+        rout, rcap, rwt = acf(rent, "outreach"), acf(rent, "capacity"), acf(rent, "weight")
+        spec += [("Working height", f"{acf(rent, 'working_height'):.2f} m")]
+        if rout:
+            spec.append(("Horizontal outreach", f"{rout:.2f} m"))
+        spec += [("Safe working load", f"{rcap} kg"), ("Machine weight", f"{rwt:,} kg")]
+        spec_src = f"Model specs from our rental fleet data for the {m}."
+    else:
+        spec += [("Working height", f"{wh:g} m"), ("Horizontal outreach", "[from spec sheet]"),
+                 ("Safe working load", "[from spec sheet]"), ("Machine weight", "[from spec sheet]")]
+        spec_src = "Working height from our sales stock data. [Add the other specs from the manufacturer spec sheet.]"
+    spec.append(("Hours", hours or "[confirm]"))
+
+    if photos:
+        vid = photos[2] if len(photos) > 2 else photos[0]
+        video = media(_photo(vid[0]), f"Walk-around video of the {m}", "ratio-16-9")
+    else:
+        video = '<div class="ph ratio-16-9 ph--req" data-label="Walk-around video"></div>'
+
+    # similar: other used stock of the same type (same model first, then closest year), then other types
+    pool = [x for x in USED if x is not it]
+    key = lambda x: (acf(x, "model") != m, abs(acf(x, "year") - y))
+    similar = sorted((x for x in pool if tax(x, "machine_type") == mtype), key=key)[:3]
+    if len(similar) < 3:
+        similar += sorted((x for x in pool if tax(x, "machine_type") != mtype), key=key)[:3 - len(similar)]
+
+    return f'''<section>
+  <div class="wrap">
+    <!-- SOLD BANNER: show only when the machine is sold. Keep the page live. -->
+    <div class="sold-banner">
+      <span><strong>Mockup note:</strong> when this machine is sold, this banner shows: “This machine is sold – see similar machines below.”</span>
+      <a class="btn btn--red btn--sm" href="sales-used.html?m_type={mtype}">See similar machines</a>
+    </div>
+  </div>
+  <div class="wrap detail-top">
+    <div class="gallery">
+      {detail_gallery(photos, f"Used {name} {tname.lower()} for sale")}
+    </div>
+    <div class="detail-info">
+      <span class="badge badge--ok">Available</span>
+      <h1>Used {name} {tname} for Sale</h1>
+      <p class="stock-no">Stock no. <strong>{stock or "[stock no.]"}</strong> · Machine origin: {origin}</p>
+      <div class="key-specs">
+        <div><strong>{y}</strong>Year</div>
+        <div><strong>{origin}</strong>Origin</div>
+        <div><strong>{wh:g} m</strong>Working height</div>
+        <div><strong>{hours or "[hours]"}</strong>Hours</div>
+      </div>
+      <div class="price" style="font-size:1.6rem;margin-bottom:16px">Contact for price <small>UAE and export enquiries welcome</small></div>
+      <div class="detail-actions">
+        <a class="btn btn--red btn--block" href="contact.html#enquiry" {quote_attrs("sale", name)}>Enquire About This Machine</a>
+        <div class="row">
+          <a class="btn btn--wa" href="{{{{WA_LINK}}}}" style="justify-content:center">{icon("wa")} WhatsApp</a>
+          <a class="btn btn--navy" href="{{{{PHONE_LINK}}}}" style="justify-content:center">{icon("phone")} Call</a>
+        </div>
+      </div>
+      <p class="small muted" style="margin-top:12px">WhatsApp message is pre-filled with the machine name and page link.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section--alt" style="padding-top:56px">
+  <div class="wrap two-col two-col--quote">
+    <div class="content">
+      <h2>Condition &amp; History</h2>
+      <ul class="tick-list">
+        <li>[Overall condition – e.g. good working order]</li>
+        <li>{f"{hours} hours – [confirm from the hour-meter photo]" if hours else "[Hours – confirm from the hour-meter photo]"}</li>
+        <li>[Service history / last service date]</li>
+        <li>[Tyres, paint, platform condition]</li>
+      </ul>
+      <!-- Walk-around video: "lite" embed – the YouTube player loads only on click -->
+      <div class="video-poster">
+        {video}
+        <div class="play"><span>▶</span></div>
+      </div>
+      <p class="small muted">Walk-around video – loads only when clicked.</p>
+
+      <h2>Full Specifications</h2>
+      <div class="table-wrap">
+        <table class="spec-table">
+          <tbody>{_rows(spec)}</tbody>
+        </table>
+      </div>
+      <p class="small muted">{spec_src}</p>
+
+      <h2>Shipping &amp; Export</h2>
+      <p>[Only if offered: export documents, help with shipping, loading at your Dubai yard, countries you have exported to.]</p>
+    </div>
+    <!-- Sticky quote form on desktop (1024px+); hidden below that (popup + bottom enquiry section instead). -->
+    <aside class="side-box side-box--quote" aria-labelledby="qs-heading">
+      <h3 id="qs-heading">Interested in this machine?</h3>
+      <p class="small muted">{name} · {origin}</p>
+      <form class="qf" data-quote-form="inline" novalidate>{quote_inline("qs-", "sale", name, "", False)}</form>
+    </aside>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="flex-between section-head" style="max-width:none"><h2 class="mt-0">Similar Machines for Sale</h2><a class="link-arrow" href="sales-used.html">All used equipment →</a></div>
+    <div class="grid grid-3">
+      {"".join(machine_card(x) for x in similar)}
+    </div>
+  </div>
+</section>
+'''
+
+
 # ------------------------------------------------------------------ header / footer
 def header(active):
     # Same menu as the home page header: menu_html() (styles in assets/css/menu.css, shared by both headers)
@@ -2253,12 +2579,7 @@ for g in GROUPS.values():
                       f"{c['one']} Rental in Dubai & UAE – {c['n']} Models | Cherry Pickers Equipment",
                       f"Rent {c['name'].lower()} in Dubai and across the UAE: {c['n']} models from {c['lo']} to {c['hi']} working height. Daily, weekly and monthly hire.",
                       "rental", [("Rental", "rental.html"), (g["name"], g["file"]), (c["name"], "")], (lambda c=c: page_rental_category(c))))
-RENTAL_SAMPLE_PATH = "rental/genie-gs-3246/index.html"   # one sample rental detail page (flat machine URL); WordPress renders the rest
 PAGES += [
-    (RENTAL_SAMPLE_PATH, "Genie GS-3246 Electric Scissor Lift for Rent in Dubai | Cherry Pickers Equipment",
-     "Rent the Genie GS-3246 slab electric scissor lift in Dubai: 11.75 m working height, 318 kg capacity.", "rental",
-     [("Rental", "rental.html"), ("Scissor Lifts", GROUPS["scissor"]["file"]), (CATS["se"]["name"], CATS["se"]["file"]), ("Genie GS-3246", "")],
-     "rental-detail"),
     ("sales/index.html", "Used Boom Lifts & Scissor Lifts for Sale – UAE & Export | Cherry Pickers Equipment",
      f"Buy used JLG and Genie boom lifts and scissor lifts. {len(USED)} machines available, {N_SOLD} sold and exported. Contact for price.", "sales", [("Sales", "")], page_sales_landing),
     ("sales/new/index.html", "New Access Equipment for Sale in UAE | Cherry Pickers Equipment",
@@ -2270,14 +2591,6 @@ PAGES += [
     ("sales/sold/index.html", f"Sold Access Equipment – {N_SOLD} Sales Records | Cherry Pickers Equipment",
      f"Records of {N_SOLD} used boom lifts and scissor lifts sold and exported by Cherry Pickers Equipment, by model, year and destination.", "sales",
      [("Sales", "sales.html"), ("Sold Equipment", "")], page_sales_sold),
-    ("sales/used/2010-jlg-600aj/index.html", "Used 2010 JLG 600AJ Articulated Boom Lift for Sale | Cherry Pickers Equipment",
-     "Used 2010 JLG 600AJ articulated boom lift for sale: 20.5 m working height, Australian origin. Contact for price.", "sales",
-     [("Sales", "sales.html"), ("Used Equipment", "sales-used.html"), ("2010 JLG 600AJ", "")], "sale-detail"),
-    (SOLD_SAMPLE_PATH, f"Sold: {SOLD_SAMPLE['title']} {TYPES[tax(SOLD_SAMPLE, 'machine_type')][1]} | Cherry Pickers Equipment",
-     f"{SOLD_SAMPLE['title']} {TYPES[tax(SOLD_SAMPLE, 'machine_type')][1].lower()} from {acf(SOLD_SAMPLE, 'origin')}, sold {fmt_date(acf(SOLD_SAMPLE, 'sold_date'))}"
-     f"{' to ' + acf(SOLD_SAMPLE, 'sold_to') if acf(SOLD_SAMPLE, 'sold_to') else ''}. Looking for one like it? We source used JLG and Genie machines.", "sales",
-     [("Sales", "sales.html"), ("Sold Equipment", "sales-sold.html"), (SOLD_SAMPLE["title"], "")],
-     (lambda: page_sold_detail(SOLD_SAMPLE))),
     ("services/index.html", "Access Equipment Services in UAE | Cherry Pickers Equipment",
      "Equipment rental, maintenance and repair, and used machine sales across the UAE.", "services", [("Services", "")], "services"),
     ("services/maintenance-repair/index.html", "MEWP Maintenance & Repair in Dubai & UAE | Cherry Pickers Equipment",
@@ -2306,6 +2619,37 @@ PAGES += [
 ]
 
 
+# ------------------------------------------------------------------ machine detail pages (single-machine.php)
+# One sample per template (DETAIL_SAMPLE), at its permalink from machine_path():
+#   rental -> rental/<slug>/     used / sold -> sales/<year>-<brand>-<model>-<stock id>/
+MACHINE_PAGES = {}   # page path -> machine
+for _it in [DETAIL_SAMPLE["rental"]]:
+    _c = SLUG_CAT[tax(_it, "machine_type")]
+    _m, _wh, _out = acf(_it, "model"), acf(_it, "working_height"), acf(_it, "outreach")
+    _reach = f", {_out:g} m outreach" if _out else ""
+    PAGES.append((machine_path(_it) + "index.html", f"{_m} {_c['one']} for Rent in Dubai | Cherry Pickers Equipment",
+                  f"Rent the {_m} {_c['one'].lower()} in Dubai: {_wh:g} m working height{_reach}, {acf(_it, 'capacity')} kg capacity.", "rental",
+                  [("Rental", "rental.html"), (_c["group"]["name"], _c["group"]["file"]), (_c["name"], _c["file"]), (_m, "")],
+                  (lambda it=_it: page_rental_detail(it))))
+    MACHINE_PAGES[machine_path(_it) + "index.html"] = _it
+for _it in [DETAIL_SAMPLE["used"]]:
+    _t, _n = TYPES[tax(_it, "machine_type")][1], f"{acf(_it, 'year')} {acf(_it, 'model')}"
+    PAGES.append((machine_path(_it) + "index.html", f"Used {_n} {_t} for Sale | Cherry Pickers Equipment",
+                  f"Used {_n} {_t.lower()} for sale: {acf(_it, 'working_height'):g} m working height, machine origin {acf(_it, 'origin')}. Contact for price.", "sales",
+                  [("Sales", "sales.html"), ("Used Equipment", "sales-used.html"), (_n, "")],
+                  (lambda it=_it: page_used_detail(it))))
+    MACHINE_PAGES[machine_path(_it) + "index.html"] = _it
+for _it in [DETAIL_SAMPLE["sold"]]:
+    _t, _to = TYPES[tax(_it, "machine_type")][1], acf(_it, "sold_to")
+    _when = f", sold {fmt_date(acf(_it, 'sold_date'))}" if acf(_it, "sold_date") else ", sold"
+    PAGES.append((machine_path(_it) + "index.html", f"Sold: {_it['title']} {_t} | Cherry Pickers Equipment",
+                  f"{_it['title']} {_t.lower()} from {acf(_it, 'origin')}{_when}{' to ' + _to if _to else ''}. Looking for one like it? We source used JLG and Genie machines.", "sales",
+                  [("Sales", "sales.html"), ("Sold Equipment", "sales-sold.html"), (_it["title"], "")],
+                  (lambda it=_it: page_sold_detail(it))))
+    MACHINE_PAGES[machine_path(_it) + "index.html"] = _it
+assert len({p[0] for p in PAGES}) == len(PAGES), "duplicate page path"
+
+
 # ------------------------------------------------------------------ WhatsApp pre-filled messages
 # Every wa.me link on a page gets the message for that page (header icon, buttons, mobile bar, footer).
 WA_HI = "Hi Cherry Pickers Equipment,"
@@ -2314,13 +2658,11 @@ WA_DEFAULT = f"{WA_HI} I'd like more information about your access equipment."
 WA_MSG = {
     "rental/index.html": f"{WA_HI} I'd like a rental quote.\nMachine type:" + WA_RENT,
     "rental/all-machines/index.html": f"{WA_HI} I'd like a rental quote.\nMachine type:" + WA_RENT,
-    RENTAL_SAMPLE_PATH: f"{WA_HI} I'd like a quote to rent the Genie GS-3246 electric scissor lift.\nSite location:\nDates:",
     "rental/spider-lifts/index.html": f"{WA_HI} I'd like to register interest in renting a spider lift (17 – 36 m)." + WA_RENT,
     "sales/index.html": f"{WA_HI} I'm interested in buying a used machine.\nModel:\nWorking height:\nCountry:",
     "sales/new/index.html": f"{WA_HI} I'm interested in buying a new machine.\nModel:\nCountry:",
     "sales/used/index.html": f"{WA_HI} I'm interested in one of your used machines for sale.\nModel:\nCountry:",
     "sales/sold/index.html": f"{WA_HI} I'm looking for a machine like the ones you have sold.\nModel:\nYear range:\nCountry:",
-    "sales/used/2010-jlg-600aj/index.html": f"{WA_HI} I'm interested in the used 2010 JLG 600AJ articulated boom lift. Please send the price and more photos.\n{SITE}sales/used/2010-jlg-600aj/",
     "services/index.html": f"{WA_HI} I'd like to know more about your services.",
     "services/maintenance-repair/index.html": f"{WA_HI} I need service or repair for a machine.\nBrand & model:\nProblem:\nLocation:",
     "contact/index.html": f"{WA_HI} I have an enquiry.",
@@ -2328,14 +2670,22 @@ WA_MSG = {
     "services/on-site-repairs/index.html": f"{WA_HI} I have a machine breakdown and need an on-site repair.\nBrand & model:\nProblem:\nLocation:",
     "services/workshop-services/index.html": f"{WA_HI} I'd like to book a workshop service.\nBrand & model:\nWork needed:",
 }
-WA_MSG[SOLD_SAMPLE_PATH] = (f"{WA_HI} I'm looking for a machine like the {SOLD_SAMPLE['title']} you sold.\n"
-                            f"Year range:\nCountry:\n{SITE}{SOLD_SAMPLE_PATH.replace('index.html', '')}")
 for _g in GROUPS.values():
     if not _g.get("soon"):
         WA_MSG[f"rental/{_g['slug']}/index.html"] = f"{WA_HI} I'd like a quote to rent a {_g['one'].lower()}.\nType:" + WA_RENT
 for _c in CATS.values():
     _m = _c['one'].lower()
     WA_MSG[f"rental/{_c['group']['slug']}/{_c['slug']}/index.html"] = f"{WA_HI} I'd like a quote to rent {'an' if _m[0] in 'aeiou' else 'a'} {_m}." + WA_RENT
+for _path, _it in MACHINE_PAGES.items():
+    _url, _m = SITE + _path.replace("index.html", ""), acf(_it, "model")
+    _st = tax(_it, "listing_status")
+    if _st == "rental":
+        WA_MSG[_path] = f"{WA_HI} I'd like a quote to rent the {_m} {SLUG_CAT[tax(_it, 'machine_type')]['one'].lower()}.\nSite location:\nDates:\n{_url}"
+    elif _st == "used":
+        WA_MSG[_path] = (f"{WA_HI} I'm interested in the used {acf(_it, 'year')} {_m} {TYPES[tax(_it, 'machine_type')][1].lower()}. "
+                         f"Please send the price and more photos.\n{_url}")
+    else:
+        WA_MSG[_path] = f"{WA_HI} I'm looking for a machine like the {_it['title']} you sold.\nYear range:\nCountry:\n{_url}"
 
 
 def wa_prefill(html, path):
@@ -2353,6 +2703,15 @@ def build():
     # rental categories moved under /rental/{main}/ and machine pages became flat /rental/{slug}/ (old URLs: redirects.csv)
     for old in OLD_RENTAL_CATS:
         shutil.rmtree(OUT / "rental" / old, ignore_errors=True)
+    # sales machine pages moved from /sales/{used|sold}/{slug}/ to /sales/{year}-{brand}-{model}-{stock id}/
+    for status in ("new", "used", "sold"):
+        for old in (OUT / "sales" / status).glob("*/"):
+            shutil.rmtree(old, ignore_errors=True)
+    # machine detail pages: only the DETAIL_SAMPLE pages are built, so clear any other machine folders first
+    for it in RENTAL_ITEMS:
+        shutil.rmtree(OUT / "rental" / it["slug"], ignore_errors=True)
+    for old in (OUT / "sales").glob("[0-9]*/"):
+        shutil.rmtree(old, ignore_errors=True)
     built, sitemap = [], []
     global CPE_PAGE, PAGE_LD
     for path, title, desc, active, crumbs, body in PAGES:

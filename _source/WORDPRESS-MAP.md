@@ -53,7 +53,7 @@ Each mockup part has one WordPress equivalent. Build the PHP from the mockup out
 | `sold_date` | text `YYYY-MM` | sold | `YYYY-00` = month unknown; empty = not recorded |
 | `availability` | select | rental | `available` / `on-hire` |
 | `return_date` | date | (none yet) | all empty (for "on hire until …") |
-| `stock_no` | text | (none yet) | all empty, and not displayed (business decision) |
+| `stock_no` | text | used, sold | **Needed for sales URLs** (last part of `/sales/{year}-{brand}-{model}-{stock id}/`), e.g. `CP1001`. All empty in the mockup, so the build uses the placeholder `cp{post ID}`. Not shown on the page (business decision). |
 | `photo_count` | number | (none yet) | all empty |
 | `image` | image | all | Mockup: an image basename in `assets/img/` (the `-sm` variant is used on cards). For sold records this is a photo of the **model**, not the unit. |
 
@@ -61,15 +61,13 @@ Each mockup part has one WordPress equivalent. Build the PHP from the mockup out
 - Rental machine: `/rental/{slug}/` (flat; the category is shown only in the breadcrumbs, so re-categorising a machine never changes its URL)
 - Rental main category: `/rental/{parent term}/`; sub-category: `/rental/{parent term}/{child term}/`
 - `/rental/{x}/` is resolved **term first**: if `x` is a `machine_type` parent term (or `all-machines`), show that page; otherwise look up a rental `machine` post with slug `x`. A machine slug must never equal a parent term slug – `build.py` asserts this for the mockup data.
-- Others: `/sales/{listing_status}/{slug}/`
+- Sales machine (used, new, sold): `/sales/{year}-{brand}-{model}-{stock id}/`, e.g. `/sales/2010-jlg-600aj-cp1001/`
+  - Built from ACF `year`, the `machine_brand` term, ACF `model` (brand prefix dropped) and ACF `stock_no`, all lower-case with `-` (`sanitize_title`). Set it as the post's `post_name` on save.
+  - No status in the URL: when a used machine sells, only its `listing_status` changes and the URL stays the same – no redirect, and the page keeps its search ranking. The status shows in the breadcrumbs (Sales › Used Equipment / Sold Equipment).
+  - `/sales/{x}/` is resolved **listing page first**: `new`, `used` and `sold` are the listing pages; anything else is a sales `machine` post. A sales slug always starts with the year, so it can never clash.
 
-### Slugs must be unique per post type
-**These 11 slugs appear in both used and sold:**
-`2006-genie-s-65`, `2006-jlg-1350sjp`, `2007-jlg-660sj`, `2007-jlg-860sj`, `2007-jlg-860sj-2`, `2008-jlg-1200sjp`, `2008-jlg-660sj`, `2009-jlg-1350sjp`, `2010-jlg-600aj`, `2011-jlg-860sj`, `2018-jlg-e450aj`.
-
-In a single `machine` post type, WordPress would add `-2` to the second post and change its URL. Decide before import. Either:
-- keep the used and sold URLs as they are with a custom unique slug (e.g. a hidden prefix stripped by the rewrite), or
-- accept new sold URLs and add redirects.
+### Slugs must be unique
+The stock ID makes every sales URL unique, including the same model and year sold more than once (e.g. three 2010 JLG 600AJ: `-cp112`, `-cp1038`, `-cp1194`). `build.py` asserts that no two machines share a URL. Every used and sold machine therefore needs a `stock_no` before import; WordPress would otherwise add `-2` to a duplicate.
 
 ---
 
