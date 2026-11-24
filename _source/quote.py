@@ -63,9 +63,12 @@ def _group(types, active, inner, cls="qf-field"):
             + inner.replace("{dis}", dis) + "</div>")
 
 
-def quote_fields(p, qtype="rental", machine="", category="", toggle=True, sold=False):
+def quote_fields(p, qtype="rental", machine="", category="", toggle=True, sold=False, compact=False):
     """All quote fields for one form. p = id prefix ('qm-', 'qs-', ...).
-    qtype = initial enquiry type; machine/category pre-fill (machine = specific model, kept in the hidden 'machine' field)."""
+    qtype = initial enquiry type; machine/category pre-fill (machine = specific model, kept in the hidden 'machine' field).
+    compact = detail-page sidebar: the machine is already known, so its category / model go in hidden inputs, and
+    fields sit two per row (.qf-grid--compact: name/phone, company/email, emirate/start date); the rest span both columns."""
+    full = " qf-full" if compact else ""
     req = ' <span class="qf-req" aria-hidden="true">*</span>'
     radios = "".join(
         f'<label class="qf-seg"><input type="radio" name="enquiry_type" value="{v}"{" checked" if v == qtype else ""}><span>{lab}</span></label>'
@@ -83,22 +86,24 @@ def quote_fields(p, qtype="rental", machine="", category="", toggle=True, sold=F
         f'<input id="{p}company" name="company" autocomplete="organization"></div>',
         f'<div class="qf-field"><label for="{p}email">Email</label>'
         f'<input id="{p}email" name="email" type="email" autocomplete="email"></div>',
-        _group("rental", qtype, f'<label for="{p}category">Machine needed</label><select id="{p}category" name="machine_category"{{dis}}>'
-               f'<option value="">Not sure – advise me</option>{_opts(CATEGORIES, cat_sel)}</select>'),
-        _group("sale", qtype, f'<label for="{p}model" data-qf-model-label>{model_label}</label>'
-               f'<input id="{p}model" name="machine_model" value="{esc(machine if qtype == "sale" else "")}" placeholder="e.g. JLG 860SJ"{{dis}}>'),
+        (f'<input type="hidden" name="machine_category" value="{esc(cat_sel)}">' if compact and qtype == "rental" else
+         _group("rental", qtype, f'<label for="{p}category">Machine needed</label><select id="{p}category" name="machine_category"{{dis}}>'
+                f'<option value="">Not sure – advise me</option>{_opts(CATEGORIES, cat_sel)}</select>')),
+        (f'<input type="hidden" name="machine_model" value="{esc(machine)}">' if compact and qtype == "sale" else
+         _group("sale", qtype, f'<label for="{p}model" data-qf-model-label>{model_label}</label>'
+                f'<input id="{p}model" name="machine_model" value="{esc(machine if qtype == "sale" else "")}" placeholder="e.g. JLG 860SJ"{{dis}}>')),
         _group("service", qtype, f'<label for="{p}service">Service needed</label><select id="{p}service" name="service_needed"{{dis}}>'
                f'{_opts(SERVICES)}</select>'),
         _group("service", qtype, f'<label for="{p}smachine">Machine make / model</label>'
                f'<input id="{p}smachine" name="service_machine" placeholder="e.g. Genie GS-3246"{{dis}}>'),
         _group("rental service", qtype, f'<label for="{p}emirate">Emirate</label><select id="{p}emirate" name="emirate"{{dis}}>{_opts(EMIRATES)}</select>'),
         _group("sale", qtype, f'<label for="{p}country">Country</label>'
-               f'<input id="{p}country" name="country" autocomplete="country-name" placeholder="e.g. India"{{dis}}>'),
+               f'<input id="{p}country" name="country" autocomplete="country-name" placeholder="e.g. India"{{dis}}>', cls="qf-field" + full),
         _group("rental", qtype, f'<label for="{p}date">Start date</label><input id="{p}date" name="start_date" type="date" data-qf-date{{dis}}>'),
         _group("rental", qtype, f'<label for="{p}period">Rental period</label><select id="{p}period" name="rental_period"{{dis}}>'
-               f'<option value="">Choose…</option>{_opts(PERIODS)}</select>'),
+               f'<option value="">Choose…</option>{_opts(PERIODS)}</select>', cls="qf-field" + full),
         f'<div class="qf-field qf-full"><label for="{p}details">Job details</label>'
-        f'<textarea id="{p}details" name="details" rows="3" data-qf-details placeholder="{esc(DETAILS_PH[qtype])}"></textarea></div>',
+        f'<textarea id="{p}details" name="details" rows="{2 if compact else 3}" data-qf-details placeholder="{esc(DETAILS_PH[qtype])}"></textarea></div>',
         _group("rental", qtype, f'<input id="{p}operator" name="operator" type="checkbox" value="yes"{{dis}}>'
                f'<label for="{p}operator">I need an operator <span class="qf-hint">(supplied on request)</span></label>',
                cls="qf-field qf-full qf-check"),
@@ -107,7 +112,7 @@ def quote_fields(p, qtype="rental", machine="", category="", toggle=True, sold=F
               '<input type="hidden" name="page_url" value=""><input type="hidden" name="page_title" value="">'
               f'<div class="qf-hp" aria-hidden="true"><label for="{p}website">Website</label>'
               f'<input id="{p}website" name="website" tabindex="-1" autocomplete="off"></div>')
-    return seg + '<div class="qf-grid">' + "".join(rows) + "</div>" + hidden
+    return seg + f'<div class="qf-grid{" qf-grid--compact" if compact else ""}">' + "".join(rows) + "</div>" + hidden
 
 
 def quote_foot(button="Send enquiry"):
@@ -116,9 +121,9 @@ def quote_foot(button="Send enquiry"):
             f'<p class="qf-call">Prefer to call? <a href="{PHONE_LINK}">{PHONE}</a></p>')
 
 
-def quote_inline(p, qtype="rental", machine="", category="", toggle=True, sold=False):
+def quote_inline(p, qtype="rental", machine="", category="", toggle=True, sold=False, compact=False):
     """Fields + submit for an inline <form class="qf" data-quote-form="inline" novalidate> written in a page partial."""
-    return quote_fields(p, qtype, machine, category, toggle, sold) + '<div class="qf-foot">' + quote_foot() + "</div>"
+    return quote_fields(p, qtype, machine, category, toggle, sold, compact) + '<div class="qf-foot">' + quote_foot() + "</div>"
 
 
 def quote_modal():

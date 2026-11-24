@@ -271,6 +271,32 @@
     });
   })();
 
+  // ---------- Detail tabs (About | Specifications …) – one group per [data-tabs]; panels show without JS ----------
+  document.querySelectorAll('[data-tabs]').forEach(function (group) {
+    var tabs = Array.prototype.slice.call(group.querySelectorAll('[role=tab]'));
+    if (!tabs.length) return;
+    var select = function (t, focus) {
+      tabs.forEach(function (x) {
+        var on = x === t;
+        x.setAttribute('aria-selected', on ? 'true' : 'false');
+        x.tabIndex = on ? 0 : -1;
+        var pane = document.getElementById(x.getAttribute('aria-controls'));
+        if (pane) pane.hidden = !on;
+      });
+      if (focus) t.focus();
+    };
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { select(t); });
+      t.addEventListener('keydown', function (e) {
+        var n = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : null;
+        if (n === null) return;
+        e.preventDefault();
+        select(tabs[(n + tabs.length) % tabs.length], true);
+      });
+    });
+    select(tabs.filter(function (t) { return t.getAttribute('aria-selected') === 'true'; })[0] || tabs[0]);
+  });
+
   // ---------- Machine finder: rent -> rental/all-machines/, buy -> sales/used/ with ?m_type=&m_height= ----------
   (function () {
     var finder = document.getElementById('finder');

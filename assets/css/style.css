@@ -573,6 +573,53 @@ p { margin: 0 0 1em; }
 .tabs a.active { color: var(--navy); border-bottom-color: var(--red); }
 .tabs a .count { font-size: .8rem; background: var(--bg-alt); border-radius: 99px; padding: 1px 8px; margin-left: 4px; }
 
+/* Detail-page content tabs (About | Specifications …) with an action button (spec-sheet PDF) on the right.
+   Markup: detail_tabs() in _source/build.py; behaviour: "Detail tabs" in assets/js/main.js. */
+.d-tabs-bar { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; border-bottom: 2px solid var(--line); margin-bottom: 24px; }
+.d-tabs-list { display: flex; gap: 4px; min-width: 0; }
+.d-tabs-list [role=tab] {
+  min-height: 44px;
+  padding: 12px 18px;
+  margin-bottom: -2px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  font-family: var(--head);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--gray);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.d-tabs-list [role=tab]:hover { color: var(--navy); }
+.d-tabs-list [role=tab][aria-selected=true] { color: var(--navy); border-bottom-color: var(--red); }
+.d-tabs-list [role=tab]:focus-visible { outline: 2px solid var(--navy); outline-offset: -2px; }
+.d-tabs-action { flex: none; margin-bottom: 8px; }
+.d-tabs-action svg { width: 18px; height: 18px; }
+.d-tabs-action-short, .d-tab-short { display: none; }
+.two-col > .content { min-width: 0; }   /* let the column shrink so the tab bar can't widen the page */
+.d-tabs-panel:focus-visible { outline: 2px solid var(--navy); outline-offset: 4px; }
+.d-tabs-panel + .d-tabs-panel { margin-top: 32px; }   /* no-JS: all panels stacked */
+.d-tabs-panel > p:last-child { margin-bottom: 0; }
+/* Phones: one row – tabs on the left (scroll sideways if they don't fit), a small "PDF" button on the right */
+@media (max-width: 600px) {
+  .d-tabs-bar { gap: 8px; margin-bottom: 20px; }
+  .d-tabs-list { flex: 1; gap: 0; overflow-x: auto; scrollbar-width: none; }
+  .d-tabs-list::-webkit-scrollbar { display: none; }
+  .d-tabs-list [role=tab] { padding: 10px clamp(8px, 2.6vw, 12px); font-size: clamp(.92rem, 4.2vw, 1rem); }
+  .d-tabs-list [role=tab]:first-child { padding-left: 2px; }
+  .d-tabs-action { min-height: 40px; margin-bottom: 6px; padding: 6px 12px; gap: 6px; font-size: .9rem;
+                   border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--navy); }
+  .d-tabs-action:hover { border-color: var(--navy); background: #fff; }
+  .d-tabs-action svg { width: 16px; height: 16px; color: var(--red); }
+  .d-tabs-action-full { display: none; }
+  .d-tabs-action-short { display: inline; }
+}
+@media (max-width: 400px) {
+  .d-tab-full { display: none; }
+  .d-tab-short { display: inline; }
+}
+
 /* ---------- Tables ---------- */
 .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
 table { width: 100%; border-collapse: collapse; font-size: .95rem; background: #fff; }
@@ -1528,7 +1575,9 @@ tbody tr:nth-child(even) { background: #fafbfd; }
 /* Detail pages: the sticky quote sidebar is desktop only (1024px+). Below that the Get a Quote button opens the
    quote popup and the shared enquiry section at the bottom of the page is the inline form. */
 @media (min-width: 1024px) {
-  .side-box--quote { max-height: calc(100vh - 116px); overflow-y: auto; overscroll-behavior: contain; }
+  .two-col--quote { grid-template-columns: minmax(0, 1fr) 380px; }
+  /* the compact form fits most screens; on short ones the box scrolls (thin scrollbar) so Submit stays reachable */
+  .side-box--quote { max-height: calc(100vh - 116px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 }
 @media (max-width: 1023px) {
   .side-box--quote { display: none; }

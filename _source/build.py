@@ -1565,7 +1565,6 @@ def page_sold_detail(s):
     # sale record + model specs (only specs we already hold for this model; client fills the rest)
     record = [("Make / model", m), ("Brand", m.split()[0]), ("Type", tname), ("Model year", y), ("Machine origin", origin),
               ("Sold to", to), ("Date sold", sold), ("Status", '<span class="badge badge--sold">Sold</span>')]
-    rec_rows = "".join(f"<tr><th>{k}</th><td>{v}</td></tr>" for k, v in record)
     if rent:
         rwh, rph, rout, rcap, rwt, rpw = (acf(rent, k) for k in ("working_height", "platform_height", "outreach", "capacity", "weight", "power"))
         spec = [("Working height", f"{rwh:g} m"), ("Platform height", f"{rph:g} m") if rph else ("Horizontal outreach", f"{rout:g} m"),
@@ -1577,7 +1576,6 @@ def page_sold_detail(s):
     else:
         spec = [("Working height", "[from spec sheet]"), ("Safe working load", "[from spec sheet]")]
         spec_src = "[Add the main specs from the manufacturer spec sheet.]"
-    spec_rows = "".join(f"<tr><th>{k}</th><td>{v}</td></tr>" for k, v in spec)
 
     # similar: used stock of the same type (same model first), then other sold records of this model
     avail = sorted((x for x in USED if tax(x, "machine_type") == mtype), key=lambda x: (acf(x, "model") != m, -acf(x, "year")))[:3]
@@ -1597,6 +1595,9 @@ def page_sold_detail(s):
     when = f" in {sold}" if acf(s, "sold_date") else ""
     rent_link = (f'<p class="mt-24"><a class="link-arrow" href="{machine_href(rent)}">Need a {m} for a short job? Rent one from our fleet →</a></p>'
                  if rent else "")
+    about = (f"<p>This {y} {m} {tname.lower()} (machine origin: {origin}) was sold by Cherry Pickers Equipment{when}{where}. "
+             f"It is one of {len(same)} {m} machines in our sales records. Need one like it? Tell us the year range and destination "
+             f"and we will find a matching machine.</p>")
     return f'''<section>
   <div class="wrap">
     <!-- SOLD BANNER: the page stays live after the sale (keeps its search traffic) and points buyers to similar machines -->
@@ -1642,16 +1643,9 @@ def page_sold_detail(s):
 <section class="section section--alt" style="padding-top:56px">
   <div class="wrap two-col">
     <div class="content">
-      <h2>About This Sale</h2>
-      <p>This {y} {m} {tname.lower()} (machine origin: {origin}) was sold by Cherry Pickers Equipment{when}{where}. It is one of {len(same)} {m} machines in our sales records. Need one like it? Tell us the year range and destination and we will find a matching machine.</p>
-
-      <h2>Sale Record</h2>
-      <div class="table-wrap"><table class="spec-table"><tbody>{rec_rows}</tbody></table></div>
-
-      <h2>{m} Specifications</h2>
-      <div class="table-wrap"><table class="spec-table"><tbody>{spec_rows}</tbody></table></div>
-      <p class="small muted">{spec_src}</p>
-      {rent_link}
+      {detail_tabs([("about", "About", "About This Sale", about),
+                    ("record", "Sale Record", "Sale Record", _table(record)),
+                    ("specs", "Specifications|Specs", f"{m} Specifications", _table(spec, f'<p class="small muted">{spec_src}</p>{rent_link}'))])}
 
       <h2>How We Source a Machine Like This</h2>
       <ul class="tick-list">
@@ -1742,6 +1736,35 @@ def _faq(qas):
                    for i, (q, a) in enumerate(qas))
 
 
+# full label on desktop; on phones only "PDF" shows (aria-label keeps the full name for screen readers)
+SPEC_PDF = (f'<a class="btn btn--ghost btn--sm d-tabs-action" href="#" aria-label="Download spec sheet (PDF)">{icon("file")}'
+            '<span class="d-tabs-action-full">Download spec sheet (PDF)</span><span class="d-tabs-action-short">PDF</span></a>')
+
+
+def _table(rows, note=""):
+    return f'<div class="table-wrap"><table class="spec-table"><tbody>{_rows(rows)}</tbody></table></div>{note}'
+
+
+def detail_tabs(tabs, action=SPEC_PDF):
+    """Tabbed content block for detail pages (behaviour: 'Detail tabs' in assets/js/main.js).
+    tabs = [(id, tab label, panel heading, panel html)]. The heading stays in each panel as an sr-only <h2> (SEO and
+    screen readers); the tab label shows it visually. Panels are not hidden in the HTML, so without JS all of them show.
+    A label 'Long|Short' shows the short form on small phones (e.g. 'Specifications|Specs')."""
+    btns = []
+    for n, (i, lab, _h, _b) in enumerate(tabs):
+        if "|" in lab:
+            full, short = lab.split("|", 1)
+            lab = f'<span class="d-tab-full">{full}</span><span class="d-tab-short">{short}</span>'
+        sel = "true" if n == 0 else "false"
+        tab_index = "" if n == 0 else ' tabindex="-1"'
+        btns.append(f'<button type="button" role="tab" id="t-{i}" aria-controls="p-{i}" aria-selected="{sel}"{tab_index}>{lab}</button>')
+    panels = "".join(f'\n      <div class="d-tabs-panel" role="tabpanel" id="p-{i}" aria-labelledby="t-{i}" tabindex="0">'
+                     f'\n        <h2 class="sr-only">{h}</h2>\n        {body}\n      </div>' for i, _lab, h, body in tabs)
+    return (f'<div class="d-tabs" data-tabs>\n      <div class="d-tabs-bar">\n'
+            f'        <div class="d-tabs-list" role="tablist" aria-label="Machine details">{"".join(btns)}</div>\n'
+            f'        {action}\n      </div>{panels}\n    </div>')
+
+
 def page_rental_detail(it):
     c = SLUG_CAT[tax(it, "machine_type")]
     g = c["group"]
@@ -1778,6 +1801,9 @@ def page_rental_detail(it):
     else:
         faq.append((f"How far can the {short} reach?",
                     f"Up to {wh:g} m working height and {out:g} m horizontal outreach. [Add: ground conditions and set-up space it needs.]"))
+
+    about = (f"<p>The {m} is {_an(one)} {one.lower()} with {_an(f'{wh:g}')} {wh:g} m working height and a {cap} kg safe working load. "
+             f"{power_txt}{reach_txt} [Add 2–3 lines in your own words: typical jobs your customers use it for in the UAE.]</p>")
 
     # similar: same sub-category (closest working height first), then the rest of the main category
     pool = [x for x in RENTAL_ITEMS if x is not it]
@@ -1824,18 +1850,9 @@ def page_rental_detail(it):
 <section class="section section--alt" style="padding-top:56px">
   <div class="wrap two-col two-col--quote">
     <div class="content">
-      <!-- 2. ABOUT THIS MACHINE: your own words, 80–150 words -->
-      <h2>About the {m}</h2>
-      <p>The {m} is {_an(one)} {one.lower()} with {_an(f"{wh:g}")} {wh:g} m working height and a {cap} kg safe working load. {power_txt}{reach_txt} [Add 2–3 lines in your own words: typical jobs your customers use it for in the UAE.]</p>
-
-      <!-- 3. FULL SPECIFICATIONS -->
-      <h2>Full Specifications</h2>
-      <div class="table-wrap">
-        <table class="spec-table">
-          <tbody>{_rows(spec)}</tbody>
-        </table>
-      </div>
-      <p class="mt-24"><a class="link-arrow" href="#">{icon("file")} Download manufacturer spec sheet (PDF)</a></p>
+      <!-- 2–3. TABS: About (your own words, 80–150 words) | Specifications; spec-sheet PDF on the right -->
+      {detail_tabs([("about", "About", f"About the {m}", about),
+                    ("specs", "Specifications|Specs", "Full Specifications", _table(spec))])}
 
       <!-- 4. RENTAL TERMS -->
       <h2>Rental Terms</h2>
@@ -1858,7 +1875,7 @@ def page_rental_detail(it):
     <aside class="side-box side-box--quote" aria-labelledby="qs-heading">
       <h3 id="qs-heading">Rent the {short}</h3>
       <p class="small muted">Tell us your site location and dates.</p>
-      <form class="qf" data-quote-form="inline" novalidate>{quote_inline("qs-", "rental", m, cat_q, False)}</form>
+      <form class="qf" data-quote-form="inline" novalidate>{quote_inline("qs-", "rental", m, cat_q, False, compact=True)}</form>
     </aside>
   </div>
 </section>
@@ -1906,6 +1923,20 @@ def page_used_detail(it):
     else:
         video = '<div class="ph ratio-16-9 ph--req" data-label="Walk-around video"></div>'
 
+    hours_li = f"{hours} hours – [confirm from the hour-meter photo]" if hours else "[Hours – confirm from the hour-meter photo]"
+    condition = f'''<ul class="tick-list">
+          <li>[Overall condition – e.g. good working order]</li>
+          <li>{hours_li}</li>
+          <li>[Service history / last service date]</li>
+          <li>[Tyres, paint, platform condition]</li>
+        </ul>
+        <!-- Walk-around video: "lite" embed – the YouTube player loads only on click -->
+        <div class="video-poster">
+          {video}
+          <div class="play"><span>▶</span></div>
+        </div>
+        <p class="small muted">Walk-around video – loads only when clicked.</p>'''
+
     # similar: other used stock of the same type (same model first, then closest year), then other types
     pool = [x for x in USED if x is not it]
     key = lambda x: (acf(x, "model") != m, abs(acf(x, "year") - y))
@@ -1951,27 +1982,8 @@ def page_used_detail(it):
 <section class="section section--alt" style="padding-top:56px">
   <div class="wrap two-col two-col--quote">
     <div class="content">
-      <h2>Condition &amp; History</h2>
-      <ul class="tick-list">
-        <li>[Overall condition – e.g. good working order]</li>
-        <li>{f"{hours} hours – [confirm from the hour-meter photo]" if hours else "[Hours – confirm from the hour-meter photo]"}</li>
-        <li>[Service history / last service date]</li>
-        <li>[Tyres, paint, platform condition]</li>
-      </ul>
-      <!-- Walk-around video: "lite" embed – the YouTube player loads only on click -->
-      <div class="video-poster">
-        {video}
-        <div class="play"><span>▶</span></div>
-      </div>
-      <p class="small muted">Walk-around video – loads only when clicked.</p>
-
-      <h2>Full Specifications</h2>
-      <div class="table-wrap">
-        <table class="spec-table">
-          <tbody>{_rows(spec)}</tbody>
-        </table>
-      </div>
-      <p class="small muted">{spec_src}</p>
+      {detail_tabs([("condition", "Condition &amp; History", "Condition &amp; History", condition),
+                    ("specs", "Specifications|Specs", "Full Specifications", _table(spec, f'<p class="small muted">{spec_src}</p>'))])}
 
       <h2>Shipping &amp; Export</h2>
       <p>[Only if offered: export documents, help with shipping, loading at your Dubai yard, countries you have exported to.]</p>
@@ -1980,7 +1992,7 @@ def page_used_detail(it):
     <aside class="side-box side-box--quote" aria-labelledby="qs-heading">
       <h3 id="qs-heading">Interested in this machine?</h3>
       <p class="small muted">{name} · {origin}</p>
-      <form class="qf" data-quote-form="inline" novalidate>{quote_inline("qs-", "sale", name, "", False)}</form>
+      <form class="qf" data-quote-form="inline" novalidate>{quote_inline("qs-", "sale", name, "", False, compact=True)}</form>
     </aside>
   </div>
 </section>
