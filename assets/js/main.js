@@ -238,15 +238,6 @@
   // =====================================================================
   // HOME PAGE (index.html) – each block only runs if its element exists
   // =====================================================================
-  // ---------- Header: shrink on scroll ----------
-  (function () {
-    var hdr = document.getElementById('hdr');
-    if (!hdr) return;
-    var onScroll = function () { hdr.classList.toggle('shrink', window.scrollY > 40); };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  })();
-
   // ---------- Project slider + lightbox ----------
   (function () {
     var track = document.getElementById('track');

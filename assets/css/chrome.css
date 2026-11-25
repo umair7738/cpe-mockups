@@ -1,0 +1,198 @@
+/* ==========================================================
+   Cherry Pickers Equipment – site header, footer and mobile contact bar
+   Shared by EVERY page (home included), so they look the same everywhere.
+   Markup: header() / footer() in _source/build.py. Main menu: assets/css/menu.css (loaded after this file).
+   Load order: home.css or style.css → chrome.css → quote-modal.css → menu.css
+   Values are written out (no page variables) so the result doesn't depend on which page stylesheet is loaded.
+   Brand: Navy #021440 · Red #DE1605 · Gray #6B6B6B
+   ========================================================== */
+
+.site-header, .site-footer, .mobile-bar { line-height: 1.65; }
+.site-header svg, .site-footer svg, .mobile-bar svg { display: block; max-width: 100%; }
+
+/* ---------- Header ---------- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #fff;
+  border-bottom: 1px solid #e3e6ee;
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 76px;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.logo-img { height: 54px; width: auto; display: block; }
+
+/* Main menu: assets/css/menu.css */
+
+.header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.header-phone {
+  font-family: "Barlow", "Arial Narrow", Arial, sans-serif;
+  font-weight: 700;
+  color: #021440;
+  text-decoration: none;
+  font-size: 1.02rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.header-phone svg { width: 18px; height: 18px; color: #DE1605; }
+.icon-btn {
+  width: 42px; height: 42px;
+  display: grid; place-items: center;
+  border-radius: 6px;
+  background: #1fa855;
+  color: #fff;
+}
+.icon-btn svg { width: 22px; height: 22px; }
+
+/* "Get a Quote" button (class="btn btn--red btn--sm") */
+.header-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 0;
+  font-family: "Barlow", "Arial Narrow", Arial, sans-serif;
+  font-weight: 700;
+  font-size: .9rem;
+  line-height: 1.65;
+  letter-spacing: .02em;
+  text-decoration: none;
+  padding: 9px 14px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.header-actions .btn--red { background: #DE1605; color: #fff; }
+.header-actions .btn--red:hover { background: #b81204; }
+
+.menu-toggle {
+  display: none;
+  width: 44px; height: 44px;
+  border: 1px solid #e3e6ee;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.menu-toggle span,
+.menu-toggle span::before,
+.menu-toggle span::after {
+  display: block;
+  width: 20px; height: 2px;
+  background: #021440;
+  margin: 0 auto;
+  position: relative;
+  content: "";
+}
+.menu-toggle span::before { position: absolute; top: -6px; }
+.menu-toggle span::after { position: absolute; top: 6px; }
+
+/* ---------- Footer ---------- */
+.site-footer { background: #021440; color: #aeb7cc; padding: 60px 0 0; font-size: .92rem; }
+.footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 36px; }
+.site-footer h3 {
+  font-family: "Barlow", "Arial Narrow", Arial, sans-serif;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #fff;
+  font-size: 1.05rem;
+  margin: 0 0 14px;
+}
+.site-footer ul { list-style: none; padding: 0; margin: 0; }
+.site-footer li { padding: 4px 0; }
+.site-footer a { color: #aeb7cc; text-decoration: none; }
+.site-footer a:hover { color: #fff; }
+.logo--footer { background: #fff; border-radius: 8px; padding: 8px 12px; display: inline-block; }
+.logo--footer .logo-img { height: 46px; }
+.footer-about p { margin: 14px 0; }
+.company-lines { font-size: .82rem; line-height: 1.5; }
+.company-lines strong { color: #dfe5f3; display: block; }
+.social { display: flex; gap: 8px; margin-top: 14px; }
+.social a {
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  background: rgba(255,255,255,.08);
+  display: grid; place-items: center;
+}
+.social svg { width: 18px; height: 18px; }
+.footer-contact li { display: flex; gap: 10px; }
+.footer-contact svg { width: 18px; height: 18px; color: #ff5a45; flex-shrink: 0; margin-top: 3px; }
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,.08);
+  margin-top: 44px;
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: .82rem;
+}
+
+/* ---------- Mobile contact bar (phones and tablets) ---------- */
+.mobile-bar { display: none; }
+
+/* ==========================================================
+   Responsive
+   ========================================================== */
+/* phone number text only on wide screens */
+@media (max-width: 1280px) {
+  .header-phone span { display: none; }
+}
+
+@media (max-width: 1080px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 900px) {
+  body { padding-bottom: 64px; }   /* room for the mobile bar */
+  .header-inner { height: 64px; gap: 12px; }
+  .logo-img { height: 44px; }   /* footer logo keeps 46px (.logo--footer .logo-img is more specific) */
+  .menu-toggle { display: block; margin-left: auto; }
+  /* Call / WhatsApp / Quote are in the bottom mobile bar – hide the header copies */
+  .header-actions .btn, .header-phone, .header-actions .icon-btn { display: none; }
+  .footer-bottom { flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+
+  .mobile-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: 64px;
+    z-index: 60;
+    background: #fff;
+    border-top: 1px solid #e3e6ee;
+    box-shadow: 0 -4px 16px rgba(2,20,64,.08);
+  }
+  .mobile-bar a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-family: "Barlow", "Arial Narrow", Arial, sans-serif;
+    font-weight: 700;
+    font-size: .85rem;
+    text-decoration: none;
+    color: #021440;
+  }
+  .mobile-bar a svg { width: 22px; height: 22px; }
+  .mobile-bar a.wa { color: #1fa855; }
+  .mobile-bar a.quote { background: #DE1605; color: #fff; }
+}
+
+@media (max-width: 600px) {
+  .footer-grid { grid-template-columns: 1fr; }
+}

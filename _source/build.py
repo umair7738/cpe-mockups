@@ -2011,8 +2011,7 @@ def page_used_detail(it):
 # ------------------------------------------------------------------ header / footer
 def header(active):
     # Same menu as the home page header: menu_html() (styles in assets/css/menu.css, shared by both headers)
-    return f'''<div class="mock-note">UI mockup for review · real photos and data from your website · grey boxes = photos still needed</div>
-<header class="site-header">
+    return f'''<header class="site-header">
   <div class="wrap header-inner">
     <a class="logo" href="index.html">
       <img src="assets/img/logo.webp" alt="Cherry Pickers Equipment – The Right Pick for Every Height" width="1024" height="340" class="logo-img">
@@ -2280,54 +2279,8 @@ def menu_html(active=""):
     </nav>'''
 
 
-def header_home():
-    return f'''<header class="site-hdr" id="hdr">
-  <div class="wrap hdr">
-    <a class="logo" href="index.html" aria-label="Cherry Pickers Equipment home"><img src="assets/img/logo.webp" alt="Cherry Pickers Equipment – The Right Pick for Every Height" width="1024" height="340"></a>
-    {menu_html()}
-    <div class="hdr-cta">
-      <a class="hdr-phone" href="{PHONE_LINK}" aria-label="Call {PHONE}">{icon("phone")}<span>{PHONE}</span></a>
-      <a class="btn btn-wa btn-icon" href="{WA_LINK}" target="_blank" rel="noopener" aria-label="WhatsApp us">{WA_SVG}</a>
-      <a class="btn btn-red btn-sm" href="#enquiry" {quote_attrs()}>Get a Quote</a>
-      <button class="burger" id="burger" type="button" data-menu-open aria-label="Open menu" aria-expanded="false" aria-controls="cpe-menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
-    </div>
-  </div>
-</header>'''
-
-
-def footer_home():
-    rent = "".join(f'<li><a href="{g["file"]}">{g["name"]}{" (coming soon)" if g.get("soon") else ""}</a></li>' for g in GROUPS.values())
-    rent += '<li><a href="rental-all.html">All rental machines</a></li><li><a href="rental.html">Rental overview</a></li>'
-    social = "".join(f'\n        <a href="{u}" target="_blank" rel="noopener" aria-label="{n}">{icon(k)}</a>' for n, k, u in SOCIAL)
-    return f'''<footer class="site-ftr">
-  <div class="wrap ft">
-    <div>
-      <a class="ft-logo" href="index.html"><img src="assets/img/logo.webp" alt="Cherry Pickers Equipment" width="1024" height="340" loading="lazy"></a>
-      <p>Boom lift and scissor lift rental across all seven UAE emirates, with maintenance and used equipment sales.</p>
-      <div class="soc">{social}
-      </div>
-    </div>
-    <div><h2 class="ft-h">Rental</h2><ul>{rent}</ul></div>
-    <div><h2 class="ft-h">Sales &amp; Services</h2><ul><li><a href="sales-used.html">Used Equipment</a></li><li><a href="sales-new.html">New Equipment</a></li><li><a href="sales-sold.html">Sold Equipment</a></li><li><a href="services-amc.html">AMC</a></li><li><a href="services-on-site-repairs.html">On-site Repairs</a></li><li><a href="services-workshop.html">Workshop Services</a></li></ul></div>
-    <div><h2 class="ft-h">Company</h2><ul><li><a href="about.html">About Us</a></li><li><a href="blog.html">Blog</a></li><li><a href="contact.html">Contact</a></li><li><a href="privacy-policy.html">Privacy Policy</a></li><li><a href="terms-and-conditions.html">Terms &amp; Conditions</a></li></ul></div>
-    <div><h2 class="ft-h">Contact</h2><ul>
-      <li>{ADDRESS}</li>
-      <li><a href="{PHONE_LINK}">{PHONE}</a></li>
-      <li>Breakdown 24/7: <a href="{BREAKDOWN_LINK}">{BREAKDOWN}</a></li>
-      <li><a href="mailto:info@cherrypickersglobal.com">info@cherrypickersglobal.com</a></li>
-      <li>Mon – Sat 9:00 – 19:00 · Sunday closed</li></ul></div>
-  </div>
-  <div class="wrap ft-bot">
-    <span>© 2026 Cherry Pickers Equipment Rentals &amp; Maintenance LLC · Cherry Pickers Equipment LLC</span>
-    <span>The Right Pick for Every Height</span>
-  </div>
-</footer>
-<nav class="mbar" aria-label="Quick contact">
-  <a href="{PHONE_LINK}">{icon("phone")}Call</a>
-  <a class="wa" href="{WA_LINK}" target="_blank" rel="noopener">{WA_SVG}WhatsApp</a>
-  <a class="q" href="#enquiry" {quote_attrs()}>{icon("quote")}Get a Quote</a>
-</nav>
-<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo viewer"><button id="lbX" type="button" aria-label="Close">&times;</button><img id="lbImg" alt=""><p id="lbCap"></p></div>'''
+# Home page photo lightbox (project slider). The home page uses the same header() / footer() as every other page.
+HOME_LIGHTBOX = '<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Photo viewer"><button id="lbX" type="button" aria-label="Close">&times;</button><img id="lbImg" alt=""><p id="lbCap"></p></div>'
 
 
 def breadcrumbs(items):
@@ -2355,6 +2308,7 @@ PAGE = """<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="{fonts}" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/{css}">
+<link rel="stylesheet" href="assets/css/chrome.css">
 <link rel="stylesheet" href="assets/css/quote-modal.css">
 <link rel="stylesheet" href="assets/css/menu.css">
 {head_extra}{cpe_config}</head>
@@ -2754,8 +2708,8 @@ def build():
                            css="home.css" if home else "style.css",
                            head_extra=head_extra, cpe_config=cpe_config, scripts=scripts,
                            body_class=' class="home"' if home else "",
-                           header=header_home() if home else header(active), crumbs=crumbs_html, body=body_html,
-                           footer=footer_home() if home else footer(),
+                           header=header(active), crumbs=crumbs_html, body=body_html,
+                           footer=footer() + ("\n" + HOME_LIGHTBOX if home else ""),
                            # quote popup on every page except Contact (its own inline form is the target there)
                            quote_modal="" if path == "contact/index.html" else quote_modal() + "\n")
         html = wa_prefill(rewrite_links(html, path), path)
