@@ -55,15 +55,6 @@ p { margin: 0 0 1em; }
 
 .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 20px; }
 
-/* ---------- Mockup note ---------- */
-.mock-note {
-  background: #fff4d6;
-  color: #6a4b00;
-  font-size: .8rem;
-  text-align: center;
-  padding: 6px 12px;
-}
-
 /* ---------- Buttons ---------- */
 .btn {
   display: inline-flex;
